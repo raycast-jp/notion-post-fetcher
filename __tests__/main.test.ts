@@ -23,7 +23,9 @@ let errorMock: jest.SpiedFunction<typeof core.error>
 let getInputMock: jest.SpiedFunction<typeof core.getInput>
 let setFailedMock: jest.SpiedFunction<typeof core.setFailed>
 let setOutputMock: jest.SpiedFunction<typeof core.setOutput>
-let fetchTweetOnSpecificDateMock: jest.SpiedFunction<typeof notion.fetchTweetOnSpecificDate>
+let fetchTweetOnSpecificDateMock: jest.SpiedFunction<
+  typeof notion.fetchTweetOnSpecificDate
+>
 
 describe('action', () => {
   beforeEach(() => {
@@ -34,7 +36,11 @@ describe('action', () => {
     getInputMock = jest.spyOn(core, 'getInput').mockImplementation()
     setFailedMock = jest.spyOn(core, 'setFailed').mockImplementation()
     setOutputMock = jest.spyOn(core, 'setOutput').mockImplementation()
-    fetchTweetOnSpecificDateMock = jest.spyOn(notion, 'fetchTweetOnSpecificDate').mockImplementation(date => Promise.resolve(`tweet on ${format(date, 'yyyy-MM-dd')}`))
+    fetchTweetOnSpecificDateMock = jest
+      .spyOn(notion, 'fetchTweetOnSpecificDate')
+      .mockImplementation(date =>
+        Promise.resolve(`tweet on ${format(date, 'yyyy-MM-dd')}`)
+      )
   })
 
   it('sets the time output', async () => {
@@ -52,7 +58,10 @@ describe('action', () => {
     expect(runMock).toHaveReturned()
 
     // Verify that all of the core library functions were called correctly
-    expect(debugMock).toHaveBeenNthCalledWith(1, 'wanna tweet on 2024-09-03 ...')
+    expect(debugMock).toHaveBeenNthCalledWith(
+      1,
+      'wanna tweet on 2024-09-03 ...'
+    )
     expect(setOutputMock).toHaveBeenNthCalledWith(
       1,
       'tweet',
@@ -76,10 +85,7 @@ describe('action', () => {
     expect(runMock).toHaveReturned()
 
     // Verify that all of the core library functions were called correctly
-    expect(setFailedMock).toHaveBeenNthCalledWith(
-      1,
-      'Invalid time value'
-    )
+    expect(setFailedMock).toHaveBeenNthCalledWith(1, 'Invalid time value')
     expect(errorMock).not.toHaveBeenCalled()
   })
 })

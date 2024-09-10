@@ -11,7 +11,7 @@ export async function run(): Promise<void> {
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
     core.debug(`wanna tweet on ${targetDate} ...`)
 
-    const tweet = await fetchTweetOnSpecificDate(new Date(targetDate));
+    const tweet = await fetchTweetOnSpecificDate(new Date(targetDate))
     core.setOutput('tweet', tweet)
   } catch (error) {
     // Fail the workflow run if an error occurs
