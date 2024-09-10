@@ -10,11 +10,14 @@ dotenv.config();
  * @returns ツイートの内容
  */
 export async function fetchTweetOnSpecificDate(date: Date): Promise<string> {
+
+  if(!process.env.NOTION_DB_ID) throw new Error("Not set NOTION_DB_ID");
+
   const notion = new Client({
     auth: process.env.NOTION_TOKEN,
   });
   const pages = await notion.databases.query({
-    database_id: process.env.NOTION_DB_ID!,
+    database_id: process.env.NOTION_DB_ID,
     filter: {
       property: "日付",
       date: {
@@ -28,8 +31,8 @@ export async function fetchTweetOnSpecificDate(date: Date): Promise<string> {
   if(pages.results.length > 1) throw new Error(`Not support more than 2 tweet on ${format(date, "yyyy-MM-dd")}`);
 
   const page = pages.results[0];
-  // @ts-ignore anyなので一旦仕方なく凌ぐ
+  // @ts-expect-error anyなので一旦仕方なく凌ぐ
   console.log(`target date is ${page["properties"]["日付"]["date"]["start"]}`);
-  // @ts-ignore anyなので一旦仕方なく凌ぐ
+  // @ts-expect-error anyなので一旦仕方なく凌ぐ
   return page["properties"]["投稿内容"]["rich_text"][0]["plain_text"];
 }
