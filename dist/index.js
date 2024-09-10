@@ -51482,12 +51482,36 @@ async function run() {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.fetchTweetOnSpecificDate = fetchTweetOnSpecificDate;
 const date_fns_1 = __nccwpck_require__(3314);
+const core = __importStar(__nccwpck_require__(2186));
 const client_1 = __nccwpck_require__(324);
 const dotenv_1 = __importDefault(__nccwpck_require__(2437));
 dotenv_1.default.config();
@@ -51497,13 +51521,13 @@ dotenv_1.default.config();
  * @returns ツイートの内容
  */
 async function fetchTweetOnSpecificDate(date) {
-    if (!process.env.NOTION_DB_ID)
-        throw new Error('Not set NOTION_DB_ID');
+    const NOTION_TOKEN = core.getInput('notion-token');
+    const NOTION_DB_ID = core.getInput('notion-db-id');
     const notion = new client_1.Client({
-        auth: process.env.NOTION_TOKEN
+        auth: NOTION_TOKEN
     });
     const pages = await notion.databases.query({
-        database_id: process.env.NOTION_DB_ID,
+        database_id: NOTION_DB_ID,
         filter: {
             property: '日付',
             date: {

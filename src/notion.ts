@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-
+import * as core from '@actions/core'
 import { Client } from '@notionhq/client'
 import dotenv from 'dotenv'
 dotenv.config()
@@ -10,13 +10,14 @@ dotenv.config()
  * @returns ツイートの内容
  */
 export async function fetchTweetOnSpecificDate(date: Date): Promise<string> {
-  if (!process.env.NOTION_DB_ID) throw new Error('Not set NOTION_DB_ID')
+  const NOTION_TOKEN = core.getInput('notion-token')
+  const NOTION_DB_ID = core.getInput('notion-db-id')
 
   const notion = new Client({
-    auth: process.env.NOTION_TOKEN
+    auth: NOTION_TOKEN
   })
   const pages = await notion.databases.query({
-    database_id: process.env.NOTION_DB_ID,
+    database_id: NOTION_DB_ID,
     filter: {
       property: '日付',
       date: {

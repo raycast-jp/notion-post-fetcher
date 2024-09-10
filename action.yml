@@ -9,6 +9,12 @@ branding:
 
 # Define your inputs here.
 inputs:
+  notion-token:
+    description: 'notion token'
+    required: true
+  notion-db-id:
+    description: 'notion database id'
+    required: true
   targetDate:
     description: 'target date for the tweet'
     required: true
