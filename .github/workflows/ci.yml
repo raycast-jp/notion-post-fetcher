@@ -57,7 +57,7 @@ jobs:
         id: test-action
         uses: ./
         with:
-          milliseconds: 2000
+          targetDate: '2024-09-03'
 
       - name: Print Output
         id: output
