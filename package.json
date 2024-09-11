@@ -1,5 +1,5 @@
 {
-  "name": "notion-post-fetcher-v1-action",
+  "name": "notion-post-fetcher",
   "description": "fetch notion posts for twitter",
   "version": "0.0.0",
   "author": "nagauta",
