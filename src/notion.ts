@@ -38,5 +38,9 @@ export async function fetchTweetOnSpecificDate(date: Date): Promise<string> {
   // @ts-expect-error anyなので一旦仕方なく凌ぐ
   console.log(`target date is ${page['properties']['日付']['date']['start']}`)
   // @ts-expect-error anyなので一旦仕方なく凌ぐ
-  return page['properties']['投稿内容']['rich_text'][0]['plain_text']
+  const tweetContent = page['properties']['投稿内容']['rich_text']
+    .map((x: { text: { content: string } }) => x.text.content)
+    .join('')
+
+  return tweetContent
 }

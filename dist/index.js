@@ -51543,7 +51543,10 @@ async function fetchTweetOnSpecificDate(date) {
     // @ts-expect-error anyなので一旦仕方なく凌ぐ
     console.log(`target date is ${page['properties']['日付']['date']['start']}`);
     // @ts-expect-error anyなので一旦仕方なく凌ぐ
-    return page['properties']['投稿内容']['rich_text'][0]['plain_text'];
+    const tweetContent = page['properties']['投稿内容']['rich_text']
+        .map((x) => x.text.content)
+        .join('');
+    return tweetContent;
 }
 
 
