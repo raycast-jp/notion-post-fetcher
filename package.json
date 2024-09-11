@@ -1,7 +1,7 @@
 {
   "name": "notion-post-fetcher",
   "description": "fetch notion posts for twitter",
-  "version": "0.0.0",
+  "version": "v0.0.1",
   "author": "nagauta",
   "private": true,
   "homepage": "https://github.com/raycast-jp/notion-post-fetcher",
