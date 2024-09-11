@@ -57,8 +57,10 @@ jobs:
         id: test-action
         uses: ./
         with:
-          milliseconds: 2000
+          targetDate: '2024-09-03'
+          notion-token: ${{ secrets.NOTION_TOKEN }}
+          notion-db-id: ${{ secrets.NOTION_DB_ID }}
 
       - name: Print Output
         id: output
-        run: echo "${{ steps.test-action.outputs.time }}"
+        run: echo "${{ steps.test-action.outputs.tweet }}"

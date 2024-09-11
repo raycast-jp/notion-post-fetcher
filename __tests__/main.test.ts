@@ -8,12 +8,11 @@
 
 import * as core from '@actions/core'
 import * as main from '../src/main'
+import * as notion from '../src/notion'
+import { format } from 'date-fns'
 
 // Mock the action's main function
 const runMock = jest.spyOn(main, 'run')
-
-// Other utilities
-const timeRegex = /^\d{2}:\d{2}:\d{2}/
 
 // Mock the GitHub Actions core library
 let debugMock: jest.SpiedFunction<typeof core.debug>
@@ -31,14 +30,19 @@ describe('action', () => {
     getInputMock = jest.spyOn(core, 'getInput').mockImplementation()
     setFailedMock = jest.spyOn(core, 'setFailed').mockImplementation()
     setOutputMock = jest.spyOn(core, 'setOutput').mockImplementation()
+    jest
+      .spyOn(notion, 'fetchTweetOnSpecificDate')
+      .mockImplementation(async date =>
+        Promise.resolve(`tweet on ${format(date, 'yyyy-MM-dd')}`)
+      )
   })
 
-  it('sets the time output', async () => {
+  it('get a tweet', async () => {
     // Set the action's inputs as return values from core.getInput()
     getInputMock.mockImplementation(name => {
       switch (name) {
-        case 'milliseconds':
-          return '500'
+        case 'targetDate':
+          return '2024-09-03'
         default:
           return ''
       }
@@ -48,19 +52,14 @@ describe('action', () => {
     expect(runMock).toHaveReturned()
 
     // Verify that all of the core library functions were called correctly
-    expect(debugMock).toHaveBeenNthCalledWith(1, 'Waiting 500 milliseconds ...')
     expect(debugMock).toHaveBeenNthCalledWith(
-      2,
-      expect.stringMatching(timeRegex)
-    )
-    expect(debugMock).toHaveBeenNthCalledWith(
-      3,
-      expect.stringMatching(timeRegex)
+      1,
+      'wanna tweet on 2024-09-03 ...'
     )
     expect(setOutputMock).toHaveBeenNthCalledWith(
       1,
-      'time',
-      expect.stringMatching(timeRegex)
+      'tweet',
+      expect.any(String)
     )
     expect(errorMock).not.toHaveBeenCalled()
   })
@@ -69,8 +68,8 @@ describe('action', () => {
     // Set the action's inputs as return values from core.getInput()
     getInputMock.mockImplementation(name => {
       switch (name) {
-        case 'milliseconds':
-          return 'this is not a number'
+        case 'targetDate':
+          return 'this is not a date'
         default:
           return ''
       }
@@ -80,10 +79,7 @@ describe('action', () => {
     expect(runMock).toHaveReturned()
 
     // Verify that all of the core library functions were called correctly
-    expect(setFailedMock).toHaveBeenNthCalledWith(
-      1,
-      'milliseconds not a number'
-    )
+    expect(setFailedMock).toHaveBeenNthCalledWith(1, 'Invalid time value')
     expect(errorMock).not.toHaveBeenCalled()
   })
 })

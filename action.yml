@@ -9,15 +9,21 @@ branding:
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  notion-token:
+    description: 'notion token'
     required: true
-    default: '1000'
+  notion-db-id:
+    description: 'notion database id'
+    required: true
+  targetDate:
+    description: 'target date for the tweet'
+    required: true
+    default: '2024-09-03'
 
 # Define your outputs here.
 outputs:
-  time:
-    description: 'Your output description here'
+  tweet:
+    description: 'tweet you should post'
 
 runs:
   using: node20
