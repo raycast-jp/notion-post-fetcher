@@ -4,12 +4,17 @@ import { Client } from '@notionhq/client'
 import dotenv from 'dotenv'
 dotenv.config()
 
+interface TweetData {
+  content: string;
+  media?: string[];
+}
+
 /**
  * 対象日付のツイートを取得する
  * @param date 対象の日付
- * @returns ツイートの内容
+ * @returns ツイートの内容とメディア
  */
-export async function fetchTweetOnSpecificDate(date: Date): Promise<string> {
+export async function fetchTweetOnSpecificDate(date: Date): Promise<TweetData> {
   const NOTION_TOKEN = core.getInput('notion-token')
   const NOTION_DB_ID = core.getInput('notion-db-id')
 
@@ -42,5 +47,14 @@ export async function fetchTweetOnSpecificDate(date: Date): Promise<string> {
     .map((x: { text: { content: string } }) => x.text.content)
     .join('')
 
-  return tweetContent
+  // @ts-expect-error anyなので一旦仕方なく凌ぐ
+  const mediaFiles = page['properties']['画像']?.files || []
+  const mediaUrls = mediaFiles.map((file: { file?: { url: string }, external?: { url: string }}) => {
+    return file.file?.url || file.external?.url
+  }).filter(Boolean)
+
+  return {
+    content: tweetContent,
+    media: mediaUrls.length > 0 ? mediaUrls : undefined
+  }
 }
