@@ -35305,7 +35305,7 @@ async function fetchTweetOnSpecificDate(date) {
         .filter(Boolean);
     return {
         content: tweetContent,
-        media: mediaUrls.length > 0 ? mediaUrls : undefined
+        media: mediaUrls.length > 0 ? mediaUrls[0] : undefined
     };
 }
 

@@ -6,7 +6,7 @@ dotenv.config()
 
 interface TweetData {
   content: string
-  media?: string[]
+  media?: string
 }
 
 /**

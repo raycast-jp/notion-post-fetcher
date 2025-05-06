@@ -47,8 +47,7 @@ describe('action', () => {
       .spyOn(notion, 'fetchTweetOnSpecificDate')
       .mockImplementation(async (date: Date) =>
         Promise.resolve({
-          content: `tweet on ${format(date, 'yyyy-MM-dd')}`,
-          media: []
+          content: `tweet on ${format(date, 'yyyy-MM-dd')}`
         })
       )
 
@@ -61,8 +60,7 @@ describe('action', () => {
       'wanna tweet on 2024-09-03 ...'
     )
     expect(setOutputMock).toHaveBeenNthCalledWith(1, 'tweet', {
-      content: `tweet on 2024-09-03`,
-      media: []
+      content: `tweet on 2024-09-03`
     })
     expect(errorMock).not.toHaveBeenCalled()
   })
@@ -83,7 +81,7 @@ describe('action', () => {
       .mockImplementation(async (date: Date) =>
         Promise.resolve({
           content: `tweet on ${format(date, 'yyyy-MM-dd')}`,
-          media: ['https://example.com/image1.jpg']
+          media: 'https://example.com/image1.jpg'
         })
       )
 
@@ -97,7 +95,7 @@ describe('action', () => {
     )
     expect(setOutputMock).toHaveBeenNthCalledWith(1, 'tweet', {
       content: `tweet on 2024-09-03`,
-      media: ['https://example.com/image1.jpg']
+      media: 'https://example.com/image1.jpg'
     })
     expect(errorMock).not.toHaveBeenCalled()
   })
