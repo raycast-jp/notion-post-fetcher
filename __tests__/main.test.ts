@@ -7,8 +7,8 @@
  */
 
 import * as core from '@actions/core'
-import * as main from '../src/main.js'
-import * as notion from '../src/notion.js'
+import * as main from '../src/main'
+import * as notion from '../src/notion'
 import { format } from 'date-fns'
 
 // Mock the action's main function
