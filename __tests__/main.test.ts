@@ -33,7 +33,10 @@ describe('action', () => {
     jest
       .spyOn(notion, 'fetchTweetOnSpecificDate')
       .mockImplementation(async (date: Date) =>
-        Promise.resolve(`tweet on ${format(date, 'yyyy-MM-dd')}`)
+        Promise.resolve({
+          content: `tweet on ${format(date, 'yyyy-MM-dd')}`,
+          media: []
+        })
       )
   })
 
@@ -59,7 +62,10 @@ describe('action', () => {
     expect(setOutputMock).toHaveBeenNthCalledWith(
       1,
       'tweet',
-      expect.any(String)
+      {
+        content: `tweet on 2024-09-03`,
+        media: []
+      }
     )
     expect(errorMock).not.toHaveBeenCalled()
   })
