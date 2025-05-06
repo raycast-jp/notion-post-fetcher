@@ -30,14 +30,6 @@ describe('action', () => {
     getInputMock = jest.spyOn(core, 'getInput').mockImplementation()
     setFailedMock = jest.spyOn(core, 'setFailed').mockImplementation()
     setOutputMock = jest.spyOn(core, 'setOutput').mockImplementation()
-    jest
-      .spyOn(notion, 'fetchTweetOnSpecificDate')
-      .mockImplementation(async (date: Date) =>
-        Promise.resolve({
-          content: `tweet on ${format(date, 'yyyy-MM-dd')}`,
-          media: []
-        })
-      )
   })
 
   it('get a tweet', async () => {
@@ -50,6 +42,15 @@ describe('action', () => {
           return ''
       }
     })
+
+    jest
+      .spyOn(notion, 'fetchTweetOnSpecificDate')
+      .mockImplementation(async (date: Date) =>
+        Promise.resolve({
+          content: `tweet on ${format(date, 'yyyy-MM-dd')}`,
+          media: []
+        })
+      )
 
     await main.run()
     expect(runMock).toHaveReturned()
@@ -65,6 +66,45 @@ describe('action', () => {
       {
         content: `tweet on 2024-09-03`,
         media: []
+      }
+    )
+    expect(errorMock).not.toHaveBeenCalled()
+  })
+
+  it('get a tweet with media', async () => {
+    // Set the action's inputs as return values from core.getInput()
+    getInputMock.mockImplementation(name => {
+      switch (name) {
+        case 'targetDate':
+          return '2024-09-03'
+        default:
+          return ''
+      }
+    })
+
+    jest
+      .spyOn(notion, 'fetchTweetOnSpecificDate')
+      .mockImplementation(async (date: Date) =>
+        Promise.resolve({
+          content: `tweet on ${format(date, 'yyyy-MM-dd')}`,
+          media: ['https://example.com/image1.jpg']
+        })
+      )
+
+    await main.run()
+    expect(runMock).toHaveReturned()
+
+    // Verify that all of the core library functions were called correctly
+    expect(debugMock).toHaveBeenNthCalledWith(
+      1,
+      'wanna tweet on 2024-09-03 ...'
+    )
+    expect(setOutputMock).toHaveBeenNthCalledWith(
+      1,
+      'tweet',
+      {
+        content: `tweet on 2024-09-03`,
+        media: ['https://example.com/image1.jpg']
       }
     )
     expect(errorMock).not.toHaveBeenCalled()
