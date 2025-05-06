@@ -60,14 +60,10 @@ describe('action', () => {
       1,
       'wanna tweet on 2024-09-03 ...'
     )
-    expect(setOutputMock).toHaveBeenNthCalledWith(
-      1,
-      'tweet',
-      {
-        content: `tweet on 2024-09-03`,
-        media: []
-      }
-    )
+    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'tweet', {
+      content: `tweet on 2024-09-03`,
+      media: []
+    })
     expect(errorMock).not.toHaveBeenCalled()
   })
 
@@ -99,14 +95,10 @@ describe('action', () => {
       1,
       'wanna tweet on 2024-09-03 ...'
     )
-    expect(setOutputMock).toHaveBeenNthCalledWith(
-      1,
-      'tweet',
-      {
-        content: `tweet on 2024-09-03`,
-        media: ['https://example.com/image1.jpg']
-      }
-    )
+    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'tweet', {
+      content: `tweet on 2024-09-03`,
+      media: ['https://example.com/image1.jpg']
+    })
     expect(errorMock).not.toHaveBeenCalled()
   })
 
