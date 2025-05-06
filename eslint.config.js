@@ -1,17 +1,12 @@
-import eslint from '@eslint/js';
-import tseslint from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
-import jestPlugin from 'eslint-plugin-jest';
-import globals from 'globals';
+import eslint from '@eslint/js'
+import tseslint from '@typescript-eslint/eslint-plugin'
+import tsParser from '@typescript-eslint/parser'
+import jestPlugin from 'eslint-plugin-jest'
+import globals from 'globals'
 
 export default [
   {
-    ignores: [
-      '**/node_modules/*',
-      '**/dist/*',
-      '**/coverage/*',
-      '*.json'
-    ]
+    ignores: ['**/node_modules/*', '**/dist/*', '**/coverage/*', '*.json']
   },
   {
     files: ['**/*.ts', '**/*.tsx'],
@@ -20,9 +15,7 @@ export default [
       parserOptions: {
         ecmaVersion: 2023,
         sourceType: 'module',
-        project: [
-          './tsconfig.json'
-        ]
+        project: ['./tsconfig.json']
       },
       globals: {
         ...globals.node,
@@ -32,24 +25,30 @@ export default [
     },
     plugins: {
       '@typescript-eslint': tseslint,
-      'jest': jestPlugin
+      jest: jestPlugin
     },
     rules: {
       ...eslint.configs.recommended.rules,
       ...tseslint.configs['eslint-recommended'].rules,
       ...tseslint.configs.recommended.rules,
       ...jestPlugin.configs.recommended.rules,
-      'camelcase': 'off',
+      camelcase: 'off',
       'no-console': 'off',
       'no-unused-vars': 'off',
       'no-unused-expressions': 'off',
-      'semi': 'off',
+      semi: 'off',
       '@typescript-eslint/array-type': 'error',
       '@typescript-eslint/await-thenable': 'error',
       '@typescript-eslint/ban-ts-comment': 'error',
       '@typescript-eslint/consistent-type-assertions': 'error',
-      '@typescript-eslint/explicit-member-accessibility': ['error', { 'accessibility': 'no-public' }],
-      '@typescript-eslint/explicit-function-return-type': ['error', { 'allowExpressions': true }],
+      '@typescript-eslint/explicit-member-accessibility': [
+        'error',
+        { accessibility: 'no-public' }
+      ],
+      '@typescript-eslint/explicit-function-return-type': [
+        'error',
+        { allowExpressions: true }
+      ],
       '@typescript-eslint/no-array-constructor': 'error',
       '@typescript-eslint/no-empty-interface': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
@@ -63,6 +62,10 @@ export default [
       '@typescript-eslint/no-unnecessary-qualifier': 'error',
       '@typescript-eslint/no-unnecessary-type-assertion': 'error',
       '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/no-unused-expressions': [
+        'error',
+        { allowShortCircuit: true, allowTernary: true }
+      ],
       '@typescript-eslint/no-useless-constructor': 'error',
       '@typescript-eslint/no-var-requires': 'error',
       '@typescript-eslint/prefer-for-of': 'warn',
@@ -76,4 +79,4 @@ export default [
       '@typescript-eslint/unbound-method': 'error'
     }
   }
-]; 
+]
