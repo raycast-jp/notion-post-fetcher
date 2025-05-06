@@ -57,6 +57,6 @@ export async function fetchTweetOnSpecificDate(date: Date): Promise<TweetData> {
 
   return {
     content: tweetContent,
-    media: mediaUrls.length > 0 ? mediaUrls : undefined
+    media: mediaUrls.length > 0 ? mediaUrls[0] : undefined
   }
 }
