@@ -5,8 +5,8 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 interface TweetData {
-  content: string;
-  media?: string[];
+  content: string
+  media?: string[]
 }
 
 /**
@@ -49,9 +49,11 @@ export async function fetchTweetOnSpecificDate(date: Date): Promise<TweetData> {
 
   // @ts-expect-error anyなので一旦仕方なく凌ぐ
   const mediaFiles = page['properties']['画像']?.files || []
-  const mediaUrls = mediaFiles.map((file: { file?: { url: string }, external?: { url: string }}) => {
-    return file.file?.url || file.external?.url
-  }).filter(Boolean)
+  const mediaUrls = mediaFiles
+    .map((file: { file?: { url: string }; external?: { url: string } }) => {
+      return file.file?.url || file.external?.url
+    })
+    .filter(Boolean)
 
   return {
     content: tweetContent,
