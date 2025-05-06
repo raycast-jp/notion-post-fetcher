@@ -3,7 +3,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext",
-    "rootDir": "./src",
+    "rootDir": ".",
     "moduleResolution": "NodeNext",
     "baseUrl": "./",
     "sourceMap": true,
@@ -15,5 +15,6 @@
     "skipLibCheck": true,
     "newLine": "lf"
   },
-  "exclude": ["./dist", "./node_modules", "./__tests__", "./coverage"]
+  "include": ["src/**/*", "__tests__/**/*"],
+  "exclude": ["dist", "node_modules", "coverage", "*.json"]
 }
