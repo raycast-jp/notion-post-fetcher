@@ -7,8 +7,8 @@
  */
 
 import * as core from '@actions/core'
-import * as main from '../src/main'
-import * as notion from '../src/notion'
+import * as main from '../src/main.js'
+import * as notion from '../src/notion.js'
 import { format } from 'date-fns'
 
 // Mock the action's main function
@@ -32,7 +32,7 @@ describe('action', () => {
     setOutputMock = jest.spyOn(core, 'setOutput').mockImplementation()
     jest
       .spyOn(notion, 'fetchTweetOnSpecificDate')
-      .mockImplementation(async date =>
+      .mockImplementation(async (date: Date) =>
         Promise.resolve(`tweet on ${format(date, 'yyyy-MM-dd')}`)
       )
   })
