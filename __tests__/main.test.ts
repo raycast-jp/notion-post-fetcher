@@ -32,7 +32,7 @@ describe('action', () => {
     setOutputMock = jest.spyOn(core, 'setOutput').mockImplementation()
     jest
       .spyOn(notion, 'fetchTweetOnSpecificDate')
-      .mockImplementation(async date =>
+      .mockImplementation(async (date: Date) =>
         Promise.resolve(`tweet on ${format(date, 'yyyy-MM-dd')}`)
       )
   })
