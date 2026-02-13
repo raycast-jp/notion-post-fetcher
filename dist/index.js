@@ -1927,6 +1927,20 @@ class Client {
         };
         this.databases = {
             /**
+             * List databases
+             *
+             * @deprecated Please use `search`
+             */
+            list: (args) => {
+                return this.request({
+                    path: api_endpoints_1.listDatabases.path(),
+                    method: api_endpoints_1.listDatabases.method,
+                    query: (0, utils_1.pick)(args, api_endpoints_1.listDatabases.queryParams),
+                    body: (0, utils_1.pick)(args, api_endpoints_1.listDatabases.bodyParams),
+                    auth: args === null || args === void 0 ? void 0 : args.auth,
+                });
+            },
+            /**
              * Retrieve a database
              */
             retrieve: (args) => {
@@ -1935,6 +1949,18 @@ class Client {
                     method: api_endpoints_1.getDatabase.method,
                     query: (0, utils_1.pick)(args, api_endpoints_1.getDatabase.queryParams),
                     body: (0, utils_1.pick)(args, api_endpoints_1.getDatabase.bodyParams),
+                    auth: args === null || args === void 0 ? void 0 : args.auth,
+                });
+            },
+            /**
+             * Query a database
+             */
+            query: (args) => {
+                return this.request({
+                    path: api_endpoints_1.queryDatabase.path(args),
+                    method: api_endpoints_1.queryDatabase.method,
+                    query: (0, utils_1.pick)(args, api_endpoints_1.queryDatabase.queryParams),
+                    body: (0, utils_1.pick)(args, api_endpoints_1.queryDatabase.bodyParams),
                     auth: args === null || args === void 0 ? void 0 : args.auth,
                 });
             },
@@ -1959,68 +1985,6 @@ class Client {
                     method: api_endpoints_1.updateDatabase.method,
                     query: (0, utils_1.pick)(args, api_endpoints_1.updateDatabase.queryParams),
                     body: (0, utils_1.pick)(args, api_endpoints_1.updateDatabase.bodyParams),
-                    auth: args === null || args === void 0 ? void 0 : args.auth,
-                });
-            },
-        };
-        this.dataSources = {
-            /**
-             * Retrieve a data source
-             */
-            retrieve: (args) => {
-                return this.request({
-                    path: api_endpoints_1.getDataSource.path(args),
-                    method: api_endpoints_1.getDataSource.method,
-                    query: (0, utils_1.pick)(args, api_endpoints_1.getDataSource.queryParams),
-                    body: (0, utils_1.pick)(args, api_endpoints_1.getDataSource.bodyParams),
-                    auth: args === null || args === void 0 ? void 0 : args.auth,
-                });
-            },
-            /**
-             * Query a data source
-             */
-            query: (args) => {
-                return this.request({
-                    path: api_endpoints_1.queryDataSource.path(args),
-                    method: api_endpoints_1.queryDataSource.method,
-                    query: (0, utils_1.pick)(args, api_endpoints_1.queryDataSource.queryParams),
-                    body: (0, utils_1.pick)(args, api_endpoints_1.queryDataSource.bodyParams),
-                    auth: args === null || args === void 0 ? void 0 : args.auth,
-                });
-            },
-            /**
-             * Create a data source
-             */
-            create: (args) => {
-                return this.request({
-                    path: api_endpoints_1.createDataSource.path(),
-                    method: api_endpoints_1.createDataSource.method,
-                    query: (0, utils_1.pick)(args, api_endpoints_1.createDataSource.queryParams),
-                    body: (0, utils_1.pick)(args, api_endpoints_1.createDataSource.bodyParams),
-                    auth: args === null || args === void 0 ? void 0 : args.auth,
-                });
-            },
-            /**
-             * Update a data source
-             */
-            update: (args) => {
-                return this.request({
-                    path: api_endpoints_1.updateDataSource.path(args),
-                    method: api_endpoints_1.updateDataSource.method,
-                    query: (0, utils_1.pick)(args, api_endpoints_1.updateDataSource.queryParams),
-                    body: (0, utils_1.pick)(args, api_endpoints_1.updateDataSource.bodyParams),
-                    auth: args === null || args === void 0 ? void 0 : args.auth,
-                });
-            },
-            /**
-             * List page templates that are available for a data source
-             */
-            listTemplates: (args) => {
-                return this.request({
-                    path: api_endpoints_1.listDataSourceTemplates.path(args),
-                    method: api_endpoints_1.listDataSourceTemplates.method,
-                    query: (0, utils_1.pick)(args, api_endpoints_1.listDataSourceTemplates.queryParams),
-                    body: (0, utils_1.pick)(args, api_endpoints_1.listDataSourceTemplates.bodyParams),
                     auth: args === null || args === void 0 ? void 0 : args.auth,
                 });
             },
@@ -2059,18 +2023,6 @@ class Client {
                     method: api_endpoints_1.updatePage.method,
                     query: (0, utils_1.pick)(args, api_endpoints_1.updatePage.queryParams),
                     body: (0, utils_1.pick)(args, api_endpoints_1.updatePage.bodyParams),
-                    auth: args === null || args === void 0 ? void 0 : args.auth,
-                });
-            },
-            /**
-             * Move a page
-             */
-            move: (args) => {
-                return this.request({
-                    path: api_endpoints_1.movePage.path(args),
-                    method: api_endpoints_1.movePage.method,
-                    query: (0, utils_1.pick)(args, api_endpoints_1.movePage.queryParams),
-                    body: (0, utils_1.pick)(args, api_endpoints_1.movePage.bodyParams),
                     auth: args === null || args === void 0 ? void 0 : args.auth,
                 });
             },
@@ -2309,7 +2261,6 @@ class Client {
      */
     async request(args) {
         const { path, method, query, body, formDataParams, auth } = args;
-        (0, errors_1.validateRequestPath)(path);
         this.log(logging_1.LogLevel.INFO, "request start", { method, path });
         // If the body is empty, don't send the body in the HTTP request
         const bodyAsJsonString = !body || Object.entries(body).length === 0
@@ -2383,13 +2334,7 @@ class Client {
                 throw (0, errors_1.buildRequestError)(response, responseText);
             }
             const responseJson = JSON.parse(responseText);
-            this.log(logging_1.LogLevel.INFO, "request success", {
-                method,
-                path,
-                ...("request_id" in responseJson && responseJson.request_id
-                    ? { requestId: responseJson.request_id }
-                    : {}),
-            });
+            this.log(logging_1.LogLevel.INFO, "request success", { method, path });
             return responseJson;
         }
         catch (error) {
@@ -2400,9 +2345,6 @@ class Client {
             this.log(logging_1.LogLevel.WARN, "request fail", {
                 code: error.code,
                 message: error.message,
-                ...("request_id" in error && error.request_id
-                    ? { requestId: error.request_id }
-                    : {}),
             });
             if ((0, errors_1.isHTTPResponseError)(error)) {
                 // The response body may contain sensitive information so it is logged separately at the DEBUG level
@@ -2443,7 +2385,7 @@ class Client {
     }
 }
 _Client_auth = new WeakMap(), _Client_logLevel = new WeakMap(), _Client_logger = new WeakMap(), _Client_prefixUrl = new WeakMap(), _Client_timeoutMs = new WeakMap(), _Client_notionVersion = new WeakMap(), _Client_fetch = new WeakMap(), _Client_agent = new WeakMap(), _Client_userAgent = new WeakMap();
-Client.defaultNotionVersion = "2025-09-03";
+Client.defaultNotionVersion = "2022-06-28";
 exports["default"] = Client;
 //# sourceMappingURL=Client.js.map
 
@@ -2456,7 +2398,7 @@ exports["default"] = Client;
 // cspell:disable-file
 // Note: This is a generated file. DO NOT EDIT!
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.movePage = exports.oauthIntrospect = exports.oauthRevoke = exports.oauthToken = exports.getFileUpload = exports.completeFileUpload = exports.sendFileUpload = exports.listFileUploads = exports.createFileUpload = exports.getComment = exports.listComments = exports.createComment = exports.search = exports.createDatabase = exports.updateDatabase = exports.getDatabase = exports.listDataSourceTemplates = exports.createDataSource = exports.queryDataSource = exports.updateDataSource = exports.getDataSource = exports.appendBlockChildren = exports.listBlockChildren = exports.deleteBlock = exports.updateBlock = exports.getBlock = exports.getPageProperty = exports.updatePage = exports.getPage = exports.createPage = exports.listUsers = exports.getUser = exports.getSelf = void 0;
+exports.oauthIntrospect = exports.oauthRevoke = exports.oauthToken = exports.getFileUpload = exports.completeFileUpload = exports.sendFileUpload = exports.listFileUploads = exports.createFileUpload = exports.getComment = exports.listComments = exports.createComment = exports.search = exports.createDatabase = exports.listDatabases = exports.queryDatabase = exports.updateDatabase = exports.getDatabase = exports.appendBlockChildren = exports.listBlockChildren = exports.deleteBlock = exports.updateBlock = exports.getBlock = exports.getPageProperty = exports.updatePage = exports.getPage = exports.createPage = exports.listUsers = exports.getUser = exports.getSelf = void 0;
 /**
  * Retrieve your token's bot user
  */
@@ -2494,16 +2436,7 @@ exports.createPage = {
     method: "post",
     pathParams: [],
     queryParams: [],
-    bodyParams: [
-        "parent",
-        "properties",
-        "icon",
-        "cover",
-        "content",
-        "children",
-        "template",
-        "position",
-    ],
+    bodyParams: ["parent", "properties", "icon", "cover", "content", "children"],
     path: () => `pages`,
 };
 /**
@@ -2523,16 +2456,7 @@ exports.updatePage = {
     method: "patch",
     pathParams: ["page_id"],
     queryParams: [],
-    bodyParams: [
-        "properties",
-        "icon",
-        "cover",
-        "is_locked",
-        "template",
-        "erase_content",
-        "archived",
-        "in_trash",
-    ],
+    bodyParams: ["properties", "icon", "cover", "archived", "in_trash"],
     path: (p) => `pages/${p.page_id}`,
 };
 /**
@@ -2624,66 +2548,8 @@ exports.appendBlockChildren = {
     method: "patch",
     pathParams: ["block_id"],
     queryParams: [],
-    bodyParams: ["children", "after", "position"],
+    bodyParams: ["children", "after"],
     path: (p) => `blocks/${p.block_id}/children`,
-};
-/**
- * Retrieve a data source
- */
-exports.getDataSource = {
-    method: "get",
-    pathParams: ["data_source_id"],
-    queryParams: [],
-    bodyParams: [],
-    path: (p) => `data_sources/${p.data_source_id}`,
-};
-/**
- * Update a data source
- */
-exports.updateDataSource = {
-    method: "patch",
-    pathParams: ["data_source_id"],
-    queryParams: [],
-    bodyParams: ["title", "icon", "properties", "in_trash", "archived", "parent"],
-    path: (p) => `data_sources/${p.data_source_id}`,
-};
-/**
- * Query a data source
- */
-exports.queryDataSource = {
-    method: "post",
-    pathParams: ["data_source_id"],
-    queryParams: ["filter_properties"],
-    bodyParams: [
-        "sorts",
-        "filter",
-        "start_cursor",
-        "page_size",
-        "archived",
-        "in_trash",
-        "result_type",
-    ],
-    path: (p) => `data_sources/${p.data_source_id}/query`,
-};
-/**
- * Create a data source
- */
-exports.createDataSource = {
-    method: "post",
-    pathParams: [],
-    queryParams: [],
-    bodyParams: ["parent", "properties", "title", "icon"],
-    path: () => `data_sources`,
-};
-/**
- * List templates in a data source
- */
-exports.listDataSourceTemplates = {
-    method: "get",
-    pathParams: ["data_source_id"],
-    queryParams: ["name", "start_cursor", "page_size"],
-    bodyParams: [],
-    path: (p) => `data_sources/${p.data_source_id}/templates`,
 };
 /**
  * Retrieve a database
@@ -2703,16 +2569,43 @@ exports.updateDatabase = {
     pathParams: ["database_id"],
     queryParams: [],
     bodyParams: [
-        "parent",
         "title",
         "description",
-        "is_inline",
         "icon",
         "cover",
+        "properties",
+        "is_inline",
+        "archived",
         "in_trash",
-        "is_locked",
     ],
     path: (p) => `databases/${p.database_id}`,
+};
+/**
+ * Query a database
+ */
+exports.queryDatabase = {
+    method: "post",
+    pathParams: ["database_id"],
+    queryParams: ["filter_properties"],
+    bodyParams: [
+        "sorts",
+        "filter",
+        "start_cursor",
+        "page_size",
+        "archived",
+        "in_trash",
+    ],
+    path: (p) => `databases/${p.database_id}/query`,
+};
+/**
+ * List databases
+ */
+exports.listDatabases = {
+    method: "get",
+    pathParams: [],
+    queryParams: ["start_cursor", "page_size"],
+    bodyParams: [],
+    path: () => `databases`,
 };
 /**
  * Create a database
@@ -2723,12 +2616,12 @@ exports.createDatabase = {
     queryParams: [],
     bodyParams: [
         "parent",
+        "properties",
+        "icon",
+        "cover",
         "title",
         "description",
         "is_inline",
-        "initial_data_source",
-        "icon",
-        "cover",
     ],
     path: () => `databases`,
 };
@@ -2871,16 +2764,6 @@ exports.oauthIntrospect = {
     bodyParams: ["token"],
     path: () => `oauth/introspect`,
 };
-/**
- * Move a page
- */
-exports.movePage = {
-    method: "post",
-    pathParams: ["page_id"],
-    queryParams: [],
-    bodyParams: ["parent"],
-    path: (p) => `pages/${p.page_id}/move`,
-};
 //# sourceMappingURL=api-endpoints.js.map
 
 /***/ }),
@@ -2890,9 +2773,8 @@ exports.movePage = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.APIResponseError = exports.UnknownHTTPResponseError = exports.InvalidPathParameterError = exports.RequestTimeoutError = exports.ClientErrorCode = exports.APIErrorCode = void 0;
+exports.APIResponseError = exports.UnknownHTTPResponseError = exports.RequestTimeoutError = exports.ClientErrorCode = exports.APIErrorCode = void 0;
 exports.isNotionClientError = isNotionClientError;
-exports.validateRequestPath = validateRequestPath;
 exports.isHTTPResponseError = isHTTPResponseError;
 exports.buildRequestError = buildRequestError;
 const utils_1 = __nccwpck_require__(1655);
@@ -2920,7 +2802,6 @@ var ClientErrorCode;
 (function (ClientErrorCode) {
     ClientErrorCode["RequestTimeout"] = "notionhq_client_request_timeout";
     ClientErrorCode["ResponseError"] = "notionhq_client_response_error";
-    ClientErrorCode["InvalidPathParameter"] = "notionhq_client_invalid_path_parameter";
 })(ClientErrorCode || (exports.ClientErrorCode = ClientErrorCode = {}));
 /**
  * Base error type.
@@ -2970,60 +2851,15 @@ class RequestTimeoutError extends NotionClientErrorBase {
     }
 }
 exports.RequestTimeoutError = RequestTimeoutError;
-/**
- * Error thrown when a path parameter contains invalid characters such as
- * path traversal sequences (..) that could alter the intended API endpoint.
- */
-class InvalidPathParameterError extends NotionClientErrorBase {
-    constructor(message = "Path parameter contains invalid characters that could alter the request path") {
-        super(message);
-        this.code = ClientErrorCode.InvalidPathParameter;
-        this.name = "InvalidPathParameterError";
-    }
-    static isInvalidPathParameterError(error) {
-        return isNotionClientErrorWithCode(error, {
-            [ClientErrorCode.InvalidPathParameter]: true,
-        });
-    }
-}
-exports.InvalidPathParameterError = InvalidPathParameterError;
-/**
- * Validates that a request path does not contain path traversal sequences.
- * Throws InvalidPathParameterError if the path contains ".." segments,
- * including URL-encoded variants like %2e%2e.
- */
-function validateRequestPath(path) {
-    // Check for literal path traversal
-    if (path.includes("..")) {
-        throw new InvalidPathParameterError(`Request path "${path}" contains path traversal sequence ".."`);
-    }
-    // Check for URL-encoded path traversal (%2e = '.')
-    // Only decode if path contains potential encoded dots
-    if (/%2e/i.test(path)) {
-        let decoded;
-        try {
-            decoded = decodeURIComponent(path);
-        }
-        catch {
-            // Invalid percent encoding - not a traversal concern
-            return;
-        }
-        if (decoded.includes("..")) {
-            throw new InvalidPathParameterError(`Request path "${path}" contains encoded path traversal sequence`);
-        }
-    }
-}
 class HTTPResponseError extends NotionClientErrorBase {
     constructor(args) {
         super(args.message);
         this.name = "HTTPResponseError";
-        const { code, status, headers, rawBodyText, additional_data, request_id } = args;
+        const { code, status, headers, rawBodyText } = args;
         this.code = code;
         this.status = status;
         this.headers = headers;
         this.body = rawBodyText;
-        this.additional_data = additional_data;
-        this.request_id = request_id;
     }
 }
 const httpResponseErrorCodes = {
@@ -3057,8 +2893,6 @@ class UnknownHTTPResponseError extends HTTPResponseError {
             ...args,
             code: ClientErrorCode.ResponseError,
             message: (_a = args.message) !== null && _a !== void 0 ? _a : `Request to Notion API failed with status: ${args.status}`,
-            additional_data: undefined,
-            request_id: undefined,
         });
         this.name = "UnknownHTTPResponseError";
     }
@@ -3105,8 +2939,6 @@ function buildRequestError(response, bodyText) {
             headers: response.headers,
             status: response.status,
             rawBodyText: bodyText,
-            additional_data: apiErrorResponseBody.additional_data,
-            request_id: apiErrorResponseBody.request_id,
         });
     }
     return new UnknownHTTPResponseError({
@@ -3132,14 +2964,10 @@ function parseAPIErrorResponseBody(body) {
         !isAPIErrorCode(parsed["code"])) {
         return;
     }
-    const additional_data = parsed["additional_data"];
-    const request_id = parsed["request_id"];
     return {
         ...parsed,
         code: parsed["code"],
         message: parsed["message"],
-        additional_data,
-        request_id,
     };
 }
 function isAPIErrorCode(code) {
@@ -3156,22 +2984,15 @@ function isAPIErrorCode(code) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.iteratePaginatedAPI = iteratePaginatedAPI;
 exports.collectPaginatedAPI = collectPaginatedAPI;
-exports.iterateDataSourceTemplates = iterateDataSourceTemplates;
-exports.collectDataSourceTemplates = collectDataSourceTemplates;
 exports.isFullBlock = isFullBlock;
 exports.isFullPage = isFullPage;
-exports.isFullDataSource = isFullDataSource;
 exports.isFullDatabase = isFullDatabase;
-exports.isFullPageOrDataSource = isFullPageOrDataSource;
+exports.isFullPageOrDatabase = isFullPageOrDatabase;
 exports.isFullUser = isFullUser;
 exports.isFullComment = isFullComment;
 exports.isTextRichTextItemResponse = isTextRichTextItemResponse;
 exports.isEquationRichTextItemResponse = isEquationRichTextItemResponse;
 exports.isMentionRichTextItemResponse = isMentionRichTextItemResponse;
-exports.extractNotionId = extractNotionId;
-exports.extractDatabaseId = extractDatabaseId;
-exports.extractPageId = extractPageId;
-exports.extractBlockId = extractBlockId;
 /**
  * Returns an async iterator over the results of any paginated Notion API.
  *
@@ -3228,55 +3049,6 @@ async function collectPaginatedAPI(listFn, firstPageArgs) {
     return results;
 }
 /**
- * Returns an async iterator over data source templates.
- *
- * Example (given a notion Client called `notion`):
- *
- * ```
- * for await (const template of iterateDataSourceTemplates(notion, {
- *   data_source_id: dataSourceId,
- * })) {
- *   console.log(template.name, template.is_default)
- * }
- * ```
- *
- * @param client A Notion client instance.
- * @param args Arguments including the data_source_id and optional start_cursor.
- */
-async function* iterateDataSourceTemplates(client, args) {
-    let nextCursor = args.start_cursor;
-    do {
-        const response = await client.dataSources.listTemplates({
-            ...args,
-            start_cursor: nextCursor,
-        });
-        yield* response.templates;
-        nextCursor = response.next_cursor;
-    } while (nextCursor);
-}
-/**
- * Collect all data source templates into an in-memory array.
- *
- * Example (given a notion Client called `notion`):
- *
- * ```
- * const templates = await collectDataSourceTemplates(notion, {
- *   data_source_id: dataSourceId,
- * })
- * // Do something with templates.
- * ```
- *
- * @param client A Notion client instance.
- * @param args Arguments including the data_source_id and optional start_cursor.
- */
-async function collectDataSourceTemplates(client, args) {
-    const results = [];
-    for await (const template of iterateDataSourceTemplates(client, args)) {
-        results.push(template);
-    }
-    return results;
-}
-/**
  * @returns `true` if `response` is a full `BlockObjectResponse`.
  */
 function isFullBlock(response) {
@@ -3289,27 +3061,18 @@ function isFullPage(response) {
     return response.object === "page" && "url" in response;
 }
 /**
- * @returns `true` if `response` is a full `DataSourceObjectResponse`.
- */
-function isFullDataSource(response) {
-    return response.object === "data_source";
-}
-/**
  * @returns `true` if `response` is a full `DatabaseObjectResponse`.
  */
 function isFullDatabase(response) {
-    return response.object === "database";
+    return response.object === "database" && "title" in response;
 }
 /**
- * @returns `true` if `response` is a full `DataSourceObjectResponse` or a full
+ * @returns `true` if `response` is a full `DatabaseObjectResponse` or a full
  * `PageObjectResponse`.
- *
- * Can be used on the results of the list response from `queryDataSource` or
- * `search` APIs.
  */
-function isFullPageOrDataSource(response) {
-    if (response.object === "data_source") {
-        return isFullDataSource(response);
+function isFullPageOrDatabase(response) {
+    if (response.object === "database") {
+        return isFullDatabase(response);
     }
     else {
         return isFullPage(response);
@@ -3345,96 +3108,6 @@ function isEquationRichTextItemResponse(richText) {
 function isMentionRichTextItemResponse(richText) {
     return richText.type === "mention";
 }
-/**
- * Extracts a Notion ID from a Notion URL or returns the input if it's already a valid ID.
- *
- * Prioritizes path IDs over query parameters to avoid extracting view IDs instead of database IDs.
- *
- * @param urlOrId A Notion URL or ID string
- * @returns The extracted UUID in standard format (with hyphens) or null if invalid
- *
- * @example
- * ```typescript
- * // Database URL with view ID - extracts database ID, not view ID
- * extractNotionId('https://notion.so/workspace/DB-abc123def456789012345678901234ab?v=viewid123')
- * // Returns: 'abc123de-f456-7890-1234-5678901234ab' (database ID)
- *
- * // Already formatted UUID
- * extractNotionId('12345678-1234-1234-1234-123456789abc')
- * // Returns: '12345678-1234-1234-1234-123456789abc'
- * ```
- */
-function extractNotionId(urlOrId) {
-    if (!urlOrId || typeof urlOrId !== "string") {
-        return null;
-    }
-    const trimmed = urlOrId.trim();
-    // Check if it's already a properly formatted UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (uuidRegex.test(trimmed)) {
-        return trimmed.toLowerCase();
-    }
-    // Check if it's a compact UUID (32 chars, no hyphens)
-    const compactUuidRegex = /^[0-9a-f]{32}$/i;
-    if (compactUuidRegex.test(trimmed)) {
-        return formatUuid(trimmed);
-    }
-    // Extract from URL - prioritize path over query parameters
-    // This prevents extracting view IDs when database IDs are in the path
-    const pathMatch = trimmed.match(/\/[^/?#]*-([0-9a-f]{32})(?:[/?#]|$)/i);
-    if (pathMatch && pathMatch[1]) {
-        return formatUuid(pathMatch[1]);
-    }
-    // Fallback to query parameters if no path ID found
-    const queryMatch = trimmed.match(/[?&](?:p|page_id|database_id)=([0-9a-f]{32})/i);
-    if (queryMatch && queryMatch[1]) {
-        return formatUuid(queryMatch[1]);
-    }
-    // Last resort: any 32-char hex string in the URL
-    const anyMatch = trimmed.match(/([0-9a-f]{32})/i);
-    if (anyMatch && anyMatch[1]) {
-        return formatUuid(anyMatch[1]);
-    }
-    return null;
-}
-/**
- * Formats a 32-character hex string into a standard UUID format.
- * @param compactId 32-character hex string without hyphens
- * @returns UUID with hyphens in standard format
- */
-function formatUuid(compactId) {
-    const clean = compactId.toLowerCase();
-    return `${clean.slice(0, 8)}-${clean.slice(8, 12)}-${clean.slice(12, 16)}-${clean.slice(16, 20)}-${clean.slice(20, 32)}`;
-}
-/**
- * Extracts a database ID from a Notion database URL.
- * Convenience wrapper around `extractNotionId`.
- */
-function extractDatabaseId(databaseUrl) {
-    return extractNotionId(databaseUrl);
-}
-/**
- * Extracts a page ID from a Notion page URL.
- * Convenience wrapper around `extractNotionId`.
- */
-function extractPageId(pageUrl) {
-    return extractNotionId(pageUrl);
-}
-/**
- * Extracts a block ID from a Notion URL with a block fragment.
- * Looks for #block-<id> or #<id> patterns.
- */
-function extractBlockId(urlWithBlock) {
-    if (!urlWithBlock || typeof urlWithBlock !== "string") {
-        return null;
-    }
-    // Look for block fragment in URL (#block-32chars or just #32chars)
-    const blockMatch = urlWithBlock.match(/#(?:block-)?([0-9a-f]{32})/i);
-    if (blockMatch && blockMatch[1]) {
-        return formatUuid(blockMatch[1]);
-    }
-    return null;
-}
 //# sourceMappingURL=helpers.js.map
 
 /***/ }),
@@ -3453,7 +3126,7 @@ var __webpack_unused_export__;
  * @packageDocumentation
  */
 __webpack_unused_export__ = ({ value: true });
-__webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = exports.dl = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = exports.Kj = void 0;
+__webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = exports.dl = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = exports.Kj = void 0;
 var Client_1 = __nccwpck_require__(9711);
 Object.defineProperty(exports, "Kj", ({ enumerable: true, get: function () { return Client_1.default; } }));
 var logging_1 = __nccwpck_require__(2743);
@@ -3464,25 +3137,17 @@ __webpack_unused_export__ = ({ enumerable: true, get: function () { return error
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return errors_1.APIResponseError; } });
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return errors_1.UnknownHTTPResponseError; } });
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return errors_1.RequestTimeoutError; } });
-__webpack_unused_export__ = ({ enumerable: true, get: function () { return errors_1.InvalidPathParameterError; } });
 // Error helpers
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return errors_1.isNotionClientError; } });
 var helpers_1 = __nccwpck_require__(5847);
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.collectPaginatedAPI; } });
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.iteratePaginatedAPI; } });
-__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.collectDataSourceTemplates; } });
-__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.iterateDataSourceTemplates; } });
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullBlock; } });
-__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullDataSource; } });
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullDatabase; } });
 Object.defineProperty(exports, "dl", ({ enumerable: true, get: function () { return helpers_1.isFullPage; } }));
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullUser; } });
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullComment; } });
-__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullPageOrDataSource; } });
-__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.extractNotionId; } });
-__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.extractDatabaseId; } });
-__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.extractPageId; } });
-__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.extractBlockId; } });
+__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullPageOrDatabase; } });
 //# sourceMappingURL=index.js.map
 
 /***/ }),
@@ -28806,7 +28471,7 @@ module.exports = parseParams
 /***/ 4585:
 /***/ ((module) => {
 
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@notionhq/client","version":"5.9.0","description":"A simple and easy to use client for the Notion API","engines":{"node":">=18"},"homepage":"https://developers.notion.com/docs/getting-started","bugs":{"url":"https://github.com/makenotion/notion-sdk-js/issues"},"repository":{"type":"git","url":"https://github.com/makenotion/notion-sdk-js/"},"keywords":["notion","notionapi","rest","notion-api"],"main":"./build/src","types":"./build/src/index.d.ts","scripts":{"prepare":"husky && npm run build","prepublishOnly":"npm run checkLoggedIn && npm run lint && npm run test","build":"tsc","prettier":"prettier --write .","lint":"prettier --check . && eslint . --ext .ts && cspell \'**/*\' ","test":"jest ./test","check-links":"git ls-files | grep md$ | xargs -n 1 markdown-link-check","prebuild":"npm run clean","clean":"rm -rf ./build","checkLoggedIn":"./scripts/verifyLoggedIn.sh"},"lint-staged":{"*.{ts,js,json,md}":"prettier --write","*.ts":"eslint --fix"},"author":"","license":"MIT","files":["build/package.json","build/src/**"],"devDependencies":{"@types/jest":"28.1.4","@typescript-eslint/eslint-plugin":"5.39.0","@typescript-eslint/parser":"5.39.0","cspell":"5.4.1","eslint":"7.24.0","husky":"^9.1.7","jest":"28.1.2","lint-staged":"^16.2.6","markdown-link-check":"3.13.7","prettier":"2.8.8","ts-jest":"28.0.5","typescript":"5.9.2"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@notionhq/client","version":"4.0.2","description":"A simple and easy to use client for the Notion API","engines":{"node":">=18"},"homepage":"https://developers.notion.com/docs/getting-started","bugs":{"url":"https://github.com/makenotion/notion-sdk-js/issues"},"repository":{"type":"git","url":"https://github.com/makenotion/notion-sdk-js/"},"keywords":["notion","notionapi","rest","notion-api"],"main":"./build/src","types":"./build/src/index.d.ts","scripts":{"prepare":"npm run build","prepublishOnly":"npm run checkLoggedIn && npm run lint && npm run test","build":"tsc","prettier":"prettier --write .","lint":"prettier --check . && eslint . --ext .ts && cspell \'**/*\' ","test":"jest ./test","check-links":"git ls-files | grep md$ | xargs -n 1 markdown-link-check","prebuild":"npm run clean","clean":"rm -rf ./build","checkLoggedIn":"./scripts/verifyLoggedIn.sh"},"author":"","license":"MIT","files":["build/package.json","build/src/**"],"devDependencies":{"@types/jest":"28.1.4","@typescript-eslint/eslint-plugin":"5.39.0","@typescript-eslint/parser":"5.39.0","cspell":"5.4.1","eslint":"7.24.0","jest":"28.1.2","markdown-link-check":"3.13.7","prettier":"2.8.8","ts-jest":"28.0.5","typescript":"5.9.2"}}');
 
 /***/ }),
 
@@ -31974,8 +31639,8 @@ async function fetchTweetOnSpecificDate(date) {
     const notion = new src/* Client */.Kj({
         auth: NOTION_TOKEN
     });
-    const pages = await notion.dataSources.query({
-        data_source_id: NOTION_DB_ID,
+    const pages = await notion.databases.query({
+        database_id: NOTION_DB_ID,
         filter: {
             property: '日付',
             date: {
