@@ -1,8 +1,8 @@
 import { format } from 'date-fns'
 import * as core from '@actions/core'
-import { Client } from '@notionhq/client'
-import dotenv from 'dotenv'
-dotenv.config()
+import { Client, isFullPage } from '@notionhq/client'
+import { config } from 'dotenv'
+config()
 
 interface TweetData {
   content: string
@@ -21,8 +21,8 @@ export async function fetchTweetOnSpecificDate(date: Date): Promise<TweetData> {
   const notion = new Client({
     auth: NOTION_TOKEN
   })
-  const pages = await notion.databases.query({
-    database_id: NOTION_DB_ID,
+  const pages = await notion.dataSources.query({
+    data_source_id: NOTION_DB_ID,
     filter: {
       property: '日付',
       date: {
@@ -40,15 +40,18 @@ export async function fetchTweetOnSpecificDate(date: Date): Promise<TweetData> {
     )
 
   const page = pages.results[0]
-  // @ts-expect-error anyなので一旦仕方なく凌ぐ
-  console.log(`target date is ${page['properties']['日付']['date']['start']}`)
-  // @ts-expect-error anyなので一旦仕方なく凌ぐ
-  const tweetContent = page['properties']['投稿内容']['rich_text']
+  if (!isFullPage(page)) throw new Error('Unexpected partial page response')
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const props = page.properties as Record<string, any>
+
+  console.log(`target date is ${props['日付']['date']['start']}`)
+
+  const tweetContent = props['投稿内容']['rich_text']
     .map((x: { text: { content: string } }) => x.text.content)
     .join('')
 
-  // @ts-expect-error anyなので一旦仕方なく凌ぐ
-  const mediaFiles = page['properties']['画像']?.files || []
+  const mediaFiles = props['画像']?.files || []
   const mediaUrls = mediaFiles
     .map((file: { file?: { url: string }; external?: { url: string } }) => {
       return file.file?.url || file.external?.url
