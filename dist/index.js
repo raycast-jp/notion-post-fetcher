@@ -1839,7 +1839,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _Client_auth, _Client_logLevel, _Client_logger, _Client_prefixUrl, _Client_timeoutMs, _Client_notionVersion, _Client_fetch, _Client_agent, _Client_userAgent;
+var _Client_auth, _Client_logLevel, _Client_logger, _Client_prefixUrl, _Client_timeoutMs, _Client_notionVersion, _Client_fetch, _Client_agent, _Client_userAgent, _Client_maxRetries, _Client_initialRetryDelayMs, _Client_maxRetryDelayMs;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const logging_1 = __nccwpck_require__(2743);
 const errors_1 = __nccwpck_require__(7979);
@@ -1848,7 +1848,7 @@ const api_endpoints_1 = __nccwpck_require__(8329);
 const package_json_1 = __nccwpck_require__(4585);
 class Client {
     constructor(options) {
-        var _a, _b, _c, _d, _e, _f;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         _Client_auth.set(this, void 0);
         _Client_logLevel.set(this, void 0);
         _Client_logger.set(this, void 0);
@@ -1858,6 +1858,9 @@ class Client {
         _Client_fetch.set(this, void 0);
         _Client_agent.set(this, void 0);
         _Client_userAgent.set(this, void 0);
+        _Client_maxRetries.set(this, void 0);
+        _Client_initialRetryDelayMs.set(this, void 0);
+        _Client_maxRetryDelayMs.set(this, void 0);
         /*
          * Notion API endpoints
          */
@@ -1866,6 +1869,7 @@ class Client {
              * Retrieve block
              */
             retrieve: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.getBlock);
                 return this.request({
                     path: api_endpoints_1.getBlock.path(args),
                     method: api_endpoints_1.getBlock.method,
@@ -1878,6 +1882,7 @@ class Client {
              * Update block
              */
             update: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.updateBlock);
                 return this.request({
                     path: api_endpoints_1.updateBlock.path(args),
                     method: api_endpoints_1.updateBlock.method,
@@ -1890,6 +1895,7 @@ class Client {
              * Delete block
              */
             delete: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.deleteBlock);
                 return this.request({
                     path: api_endpoints_1.deleteBlock.path(args),
                     method: api_endpoints_1.deleteBlock.method,
@@ -1903,6 +1909,7 @@ class Client {
                  * Append block children
                  */
                 append: (args) => {
+                    this.warnUnknownParams(args, api_endpoints_1.appendBlockChildren);
                     return this.request({
                         path: api_endpoints_1.appendBlockChildren.path(args),
                         method: api_endpoints_1.appendBlockChildren.method,
@@ -1915,6 +1922,7 @@ class Client {
                  * Retrieve block children
                  */
                 list: (args) => {
+                    this.warnUnknownParams(args, api_endpoints_1.listBlockChildren);
                     return this.request({
                         path: api_endpoints_1.listBlockChildren.path(args),
                         method: api_endpoints_1.listBlockChildren.method,
@@ -1927,23 +1935,10 @@ class Client {
         };
         this.databases = {
             /**
-             * List databases
-             *
-             * @deprecated Please use `search`
-             */
-            list: (args) => {
-                return this.request({
-                    path: api_endpoints_1.listDatabases.path(),
-                    method: api_endpoints_1.listDatabases.method,
-                    query: (0, utils_1.pick)(args, api_endpoints_1.listDatabases.queryParams),
-                    body: (0, utils_1.pick)(args, api_endpoints_1.listDatabases.bodyParams),
-                    auth: args === null || args === void 0 ? void 0 : args.auth,
-                });
-            },
-            /**
              * Retrieve a database
              */
             retrieve: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.getDatabase);
                 return this.request({
                     path: api_endpoints_1.getDatabase.path(args),
                     method: api_endpoints_1.getDatabase.method,
@@ -1953,21 +1948,10 @@ class Client {
                 });
             },
             /**
-             * Query a database
-             */
-            query: (args) => {
-                return this.request({
-                    path: api_endpoints_1.queryDatabase.path(args),
-                    method: api_endpoints_1.queryDatabase.method,
-                    query: (0, utils_1.pick)(args, api_endpoints_1.queryDatabase.queryParams),
-                    body: (0, utils_1.pick)(args, api_endpoints_1.queryDatabase.bodyParams),
-                    auth: args === null || args === void 0 ? void 0 : args.auth,
-                });
-            },
-            /**
              * Create a database
              */
             create: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.createDatabase);
                 return this.request({
                     path: api_endpoints_1.createDatabase.path(),
                     method: api_endpoints_1.createDatabase.method,
@@ -1980,6 +1964,7 @@ class Client {
              * Update a database
              */
             update: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.updateDatabase);
                 return this.request({
                     path: api_endpoints_1.updateDatabase.path(args),
                     method: api_endpoints_1.updateDatabase.method,
@@ -1989,11 +1974,79 @@ class Client {
                 });
             },
         };
+        this.dataSources = {
+            /**
+             * Retrieve a data source
+             */
+            retrieve: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.getDataSource);
+                return this.request({
+                    path: api_endpoints_1.getDataSource.path(args),
+                    method: api_endpoints_1.getDataSource.method,
+                    query: (0, utils_1.pick)(args, api_endpoints_1.getDataSource.queryParams),
+                    body: (0, utils_1.pick)(args, api_endpoints_1.getDataSource.bodyParams),
+                    auth: args === null || args === void 0 ? void 0 : args.auth,
+                });
+            },
+            /**
+             * Query a data source
+             */
+            query: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.queryDataSource);
+                return this.request({
+                    path: api_endpoints_1.queryDataSource.path(args),
+                    method: api_endpoints_1.queryDataSource.method,
+                    query: (0, utils_1.pick)(args, api_endpoints_1.queryDataSource.queryParams),
+                    body: (0, utils_1.pick)(args, api_endpoints_1.queryDataSource.bodyParams),
+                    auth: args === null || args === void 0 ? void 0 : args.auth,
+                });
+            },
+            /**
+             * Create a data source
+             */
+            create: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.createDataSource);
+                return this.request({
+                    path: api_endpoints_1.createDataSource.path(),
+                    method: api_endpoints_1.createDataSource.method,
+                    query: (0, utils_1.pick)(args, api_endpoints_1.createDataSource.queryParams),
+                    body: (0, utils_1.pick)(args, api_endpoints_1.createDataSource.bodyParams),
+                    auth: args === null || args === void 0 ? void 0 : args.auth,
+                });
+            },
+            /**
+             * Update a data source
+             */
+            update: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.updateDataSource);
+                return this.request({
+                    path: api_endpoints_1.updateDataSource.path(args),
+                    method: api_endpoints_1.updateDataSource.method,
+                    query: (0, utils_1.pick)(args, api_endpoints_1.updateDataSource.queryParams),
+                    body: (0, utils_1.pick)(args, api_endpoints_1.updateDataSource.bodyParams),
+                    auth: args === null || args === void 0 ? void 0 : args.auth,
+                });
+            },
+            /**
+             * List page templates that are available for a data source
+             */
+            listTemplates: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.listDataSourceTemplates);
+                return this.request({
+                    path: api_endpoints_1.listDataSourceTemplates.path(args),
+                    method: api_endpoints_1.listDataSourceTemplates.method,
+                    query: (0, utils_1.pick)(args, api_endpoints_1.listDataSourceTemplates.queryParams),
+                    body: (0, utils_1.pick)(args, api_endpoints_1.listDataSourceTemplates.bodyParams),
+                    auth: args === null || args === void 0 ? void 0 : args.auth,
+                });
+            },
+        };
         this.pages = {
             /**
              * Create a page
              */
             create: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.createPage);
                 return this.request({
                     path: api_endpoints_1.createPage.path(),
                     method: api_endpoints_1.createPage.method,
@@ -2006,6 +2059,7 @@ class Client {
              * Retrieve a page
              */
             retrieve: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.getPage);
                 return this.request({
                     path: api_endpoints_1.getPage.path(args),
                     method: api_endpoints_1.getPage.method,
@@ -2018,6 +2072,7 @@ class Client {
              * Update page properties
              */
             update: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.updatePage);
                 return this.request({
                     path: api_endpoints_1.updatePage.path(args),
                     method: api_endpoints_1.updatePage.method,
@@ -2026,11 +2081,49 @@ class Client {
                     auth: args === null || args === void 0 ? void 0 : args.auth,
                 });
             },
+            /**
+             * Move a page
+             */
+            move: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.movePage);
+                return this.request({
+                    path: api_endpoints_1.movePage.path(args),
+                    method: api_endpoints_1.movePage.method,
+                    query: (0, utils_1.pick)(args, api_endpoints_1.movePage.queryParams),
+                    body: (0, utils_1.pick)(args, api_endpoints_1.movePage.bodyParams),
+                    auth: args === null || args === void 0 ? void 0 : args.auth,
+                });
+            },
+            /**
+             * Retrieve a page as markdown
+             */
+            retrieveMarkdown: (args) => {
+                return this.request({
+                    path: api_endpoints_1.getPageMarkdown.path(args),
+                    method: api_endpoints_1.getPageMarkdown.method,
+                    query: (0, utils_1.pick)(args, api_endpoints_1.getPageMarkdown.queryParams),
+                    body: (0, utils_1.pick)(args, api_endpoints_1.getPageMarkdown.bodyParams),
+                    auth: args === null || args === void 0 ? void 0 : args.auth,
+                });
+            },
+            /**
+             * Update a page's content as markdown
+             */
+            updateMarkdown: (args) => {
+                return this.request({
+                    path: api_endpoints_1.updatePageMarkdown.path(args),
+                    method: api_endpoints_1.updatePageMarkdown.method,
+                    query: (0, utils_1.pick)(args, api_endpoints_1.updatePageMarkdown.queryParams),
+                    body: (0, utils_1.pick)(args, api_endpoints_1.updatePageMarkdown.bodyParams),
+                    auth: args === null || args === void 0 ? void 0 : args.auth,
+                });
+            },
             properties: {
                 /**
                  * Retrieve page property
                  */
                 retrieve: (args) => {
+                    this.warnUnknownParams(args, api_endpoints_1.getPageProperty);
                     return this.request({
                         path: api_endpoints_1.getPageProperty.path(args),
                         method: api_endpoints_1.getPageProperty.method,
@@ -2046,6 +2139,7 @@ class Client {
              * Retrieve a user
              */
             retrieve: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.getUser);
                 return this.request({
                     path: api_endpoints_1.getUser.path(args),
                     method: api_endpoints_1.getUser.method,
@@ -2058,6 +2152,7 @@ class Client {
              * List all users
              */
             list: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.listUsers);
                 return this.request({
                     path: api_endpoints_1.listUsers.path(),
                     method: api_endpoints_1.listUsers.method,
@@ -2070,6 +2165,7 @@ class Client {
              * Get details about bot
              */
             me: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.getSelf);
                 return this.request({
                     path: api_endpoints_1.getSelf.path(),
                     method: api_endpoints_1.getSelf.method,
@@ -2084,6 +2180,7 @@ class Client {
              * Create a comment
              */
             create: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.createComment);
                 return this.request({
                     path: api_endpoints_1.createComment.path(),
                     method: api_endpoints_1.createComment.method,
@@ -2096,6 +2193,7 @@ class Client {
              * List comments
              */
             list: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.listComments);
                 return this.request({
                     path: api_endpoints_1.listComments.path(),
                     method: api_endpoints_1.listComments.method,
@@ -2108,6 +2206,7 @@ class Client {
              * Retrieve a comment
              */
             retrieve: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.getComment);
                 return this.request({
                     path: api_endpoints_1.getComment.path(args),
                     method: api_endpoints_1.getComment.method,
@@ -2122,6 +2221,7 @@ class Client {
              * Create a file upload
              */
             create: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.createFileUpload);
                 return this.request({
                     path: api_endpoints_1.createFileUpload.path(),
                     method: api_endpoints_1.createFileUpload.method,
@@ -2134,6 +2234,7 @@ class Client {
              * Retrieve a file upload
              */
             retrieve: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.getFileUpload);
                 return this.request({
                     path: api_endpoints_1.getFileUpload.path(args),
                     method: api_endpoints_1.getFileUpload.method,
@@ -2145,6 +2246,7 @@ class Client {
              * List file uploads
              */
             list: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.listFileUploads);
                 return this.request({
                     path: api_endpoints_1.listFileUploads.path(),
                     method: api_endpoints_1.listFileUploads.method,
@@ -2167,6 +2269,7 @@ class Client {
              * This endpoint sends HTTP multipart/form-data instead of JSON parameters.
              */
             send: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.sendFileUpload);
                 return this.request({
                     path: api_endpoints_1.sendFileUpload.path(args),
                     method: api_endpoints_1.sendFileUpload.method,
@@ -2179,6 +2282,7 @@ class Client {
              * Complete a file upload
              */
             complete: (args) => {
+                this.warnUnknownParams(args, api_endpoints_1.completeFileUpload);
                 return this.request({
                     path: api_endpoints_1.completeFileUpload.path(args),
                     method: api_endpoints_1.completeFileUpload.method,
@@ -2191,6 +2295,7 @@ class Client {
          * Search
          */
         this.search = (args) => {
+            this.warnUnknownParams(args, api_endpoints_1.search);
             return this.request({
                 path: api_endpoints_1.search.path(),
                 method: api_endpoints_1.search.method,
@@ -2252,20 +2357,43 @@ class Client {
         __classPrivateFieldSet(this, _Client_prefixUrl, `${(_c = options === null || options === void 0 ? void 0 : options.baseUrl) !== null && _c !== void 0 ? _c : "https://api.notion.com"}/v1/`, "f");
         __classPrivateFieldSet(this, _Client_timeoutMs, (_d = options === null || options === void 0 ? void 0 : options.timeoutMs) !== null && _d !== void 0 ? _d : 60000, "f");
         __classPrivateFieldSet(this, _Client_notionVersion, (_e = options === null || options === void 0 ? void 0 : options.notionVersion) !== null && _e !== void 0 ? _e : Client.defaultNotionVersion, "f");
-        __classPrivateFieldSet(this, _Client_fetch, (_f = options === null || options === void 0 ? void 0 : options.fetch) !== null && _f !== void 0 ? _f : fetch, "f");
+        __classPrivateFieldSet(this, _Client_fetch, (_f = options === null || options === void 0 ? void 0 : options.fetch) !== null && _f !== void 0 ? _f : fetch.bind(globalThis), "f");
         __classPrivateFieldSet(this, _Client_agent, options === null || options === void 0 ? void 0 : options.agent, "f");
         __classPrivateFieldSet(this, _Client_userAgent, `notionhq-client/${package_json_1.version}`, "f");
+        if ((options === null || options === void 0 ? void 0 : options.retry) === false) {
+            __classPrivateFieldSet(this, _Client_maxRetries, 0, "f");
+            __classPrivateFieldSet(this, _Client_initialRetryDelayMs, 0, "f");
+            __classPrivateFieldSet(this, _Client_maxRetryDelayMs, 0, "f");
+        }
+        else {
+            __classPrivateFieldSet(this, _Client_maxRetries, (_h = (_g = options === null || options === void 0 ? void 0 : options.retry) === null || _g === void 0 ? void 0 : _g.maxRetries) !== null && _h !== void 0 ? _h : 2, "f");
+            __classPrivateFieldSet(this, _Client_initialRetryDelayMs, (_k = (_j = options === null || options === void 0 ? void 0 : options.retry) === null || _j === void 0 ? void 0 : _j.initialRetryDelayMs) !== null && _k !== void 0 ? _k : 1000, "f");
+            __classPrivateFieldSet(this, _Client_maxRetryDelayMs, (_m = (_l = options === null || options === void 0 ? void 0 : options.retry) === null || _l === void 0 ? void 0 : _l.maxRetryDelayMs) !== null && _m !== void 0 ? _m : 60000, "f");
+        }
     }
     /**
      * Sends a request.
      */
     async request(args) {
         const { path, method, query, body, formDataParams, auth } = args;
+        (0, errors_1.validateRequestPath)(path);
         this.log(logging_1.LogLevel.INFO, "request start", { method, path });
-        // If the body is empty, don't send the body in the HTTP request
-        const bodyAsJsonString = !body || Object.entries(body).length === 0
-            ? undefined
-            : JSON.stringify(body);
+        const url = this.buildRequestUrl(path, query);
+        const bodyAsJsonString = this.serializeBody(body);
+        const headers = this.buildRequestHeaders(args.headers, auth, bodyAsJsonString);
+        const formData = this.buildFormData(formDataParams, headers);
+        return this.executeWithRetry({
+            url,
+            method,
+            path,
+            headers,
+            body: bodyAsJsonString !== null && bodyAsJsonString !== void 0 ? bodyAsJsonString : formData,
+        });
+    }
+    /**
+     * Builds the full URL with query parameters.
+     */
+    buildRequestUrl(path, query) {
         const url = new URL(`${__classPrivateFieldGet(this, _Client_prefixUrl, "f")}${path}`);
         if (query) {
             for (const [key, value] of Object.entries(query)) {
@@ -2281,25 +2409,24 @@ class Client {
                 }
             }
         }
-        // Allow both client ID / client secret based auth as well as token based auth.
-        let authorizationHeader;
-        if (typeof auth === "object") {
-            // Client ID and secret based auth is **ONLY** supported when using the
-            // `/oauth/token` endpoint. If this is the case, handle formatting the
-            // authorization header as required by `Basic` auth.
-            const unencodedCredential = `${auth.client_id}:${auth.client_secret}`;
-            const encodedCredential = Buffer.from(unencodedCredential).toString("base64");
-            authorizationHeader = { authorization: `Basic ${encodedCredential}` };
+        return url;
+    }
+    /**
+     * Serializes the request body to JSON string if non-empty.
+     */
+    serializeBody(body) {
+        if (!body || Object.entries(body).length === 0) {
+            return undefined;
         }
-        else {
-            // Otherwise format authorization header as `Bearer` token auth.
-            authorizationHeader = this.authAsHeaders(auth);
-        }
+        return JSON.stringify(body);
+    }
+    /**
+     * Builds the request headers including auth and content-type.
+     */
+    buildRequestHeaders(customHeaders, auth, bodyAsJsonString) {
+        const authorizationHeader = this.buildAuthHeader(auth);
         const headers = {
-            // Request-level custom additional headers can be provided, but
-            // don't allow them to override all other headers, e.g. the
-            // standard user agent.
-            ...args.headers,
+            ...customHeaders,
             ...authorizationHeader,
             "Notion-Version": __classPrivateFieldGet(this, _Client_notionVersion, "f"),
             "user-agent": __classPrivateFieldGet(this, _Client_userAgent, "f"),
@@ -2307,52 +2434,230 @@ class Client {
         if (bodyAsJsonString !== undefined) {
             headers["content-type"] = "application/json";
         }
-        let formData;
-        if (formDataParams) {
-            delete headers["content-type"];
-            formData = new FormData();
-            for (const [key, value] of Object.entries(formDataParams)) {
-                if (typeof value === "string") {
-                    formData.append(key, value);
-                }
-                else if (typeof value === "object") {
-                    formData.append(key, typeof value.data === "object"
-                        ? value.data
-                        : new Blob([value.data]), value.filename);
-                }
+        return headers;
+    }
+    /**
+     * Builds the authorization header based on auth type.
+     */
+    buildAuthHeader(auth) {
+        if (typeof auth === "object") {
+            const unencodedCredential = `${auth.client_id}:${auth.client_secret}`;
+            const encodedCredential = Buffer.from(unencodedCredential).toString("base64");
+            return { authorization: `Basic ${encodedCredential}` };
+        }
+        return this.authAsHeaders(auth);
+    }
+    /**
+     * Builds FormData from form parameters if provided.
+     * Also removes content-type header to let fetch set the boundary.
+     */
+    buildFormData(formDataParams, headers) {
+        if (!formDataParams) {
+            return undefined;
+        }
+        delete headers["content-type"];
+        const formData = new FormData();
+        for (const [key, value] of Object.entries(formDataParams)) {
+            if (typeof value === "string") {
+                formData.append(key, value);
+            }
+            else if (typeof value === "object") {
+                formData.append(key, typeof value.data === "object" ? value.data : new Blob([value.data]), value.filename);
             }
         }
-        try {
-            const response = await errors_1.RequestTimeoutError.rejectAfterTimeout(__classPrivateFieldGet(this, _Client_fetch, "f").call(this, url.toString(), {
-                method: method.toUpperCase(),
-                headers,
-                body: bodyAsJsonString !== null && bodyAsJsonString !== void 0 ? bodyAsJsonString : formData,
-                agent: __classPrivateFieldGet(this, _Client_agent, "f"),
-            }), __classPrivateFieldGet(this, _Client_timeoutMs, "f"));
-            const responseText = await response.text();
-            if (!response.ok) {
-                throw (0, errors_1.buildRequestError)(response, responseText);
-            }
-            const responseJson = JSON.parse(responseText);
-            this.log(logging_1.LogLevel.INFO, "request success", { method, path });
-            return responseJson;
-        }
-        catch (error) {
-            if (!(0, errors_1.isNotionClientError)(error)) {
-                throw error;
-            }
-            // Log the error if it's one of our known error types
-            this.log(logging_1.LogLevel.WARN, "request fail", {
-                code: error.code,
-                message: error.message,
-            });
-            if ((0, errors_1.isHTTPResponseError)(error)) {
-                // The response body may contain sensitive information so it is logged separately at the DEBUG level
-                this.log(logging_1.LogLevel.DEBUG, "failed response body", {
-                    body: error.body,
+        return formData;
+    }
+    /**
+     * Executes the request with retry logic.
+     */
+    async executeWithRetry(args) {
+        const { url, method, path, headers, body } = args;
+        let attempt = 0;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            try {
+                return await this.executeSingleRequest({
+                    url,
+                    method,
+                    path,
+                    headers,
+                    body,
                 });
             }
-            throw error;
+            catch (error) {
+                if (!(0, errors_1.isNotionClientError)(error)) {
+                    throw error;
+                }
+                this.logRequestError(error, attempt);
+                if (attempt < __classPrivateFieldGet(this, _Client_maxRetries, "f") && this.canRetry(error, method)) {
+                    const delayMs = this.calculateRetryDelay(error, attempt);
+                    this.log(logging_1.LogLevel.INFO, "retrying request", {
+                        method,
+                        path,
+                        attempt: attempt + 1,
+                        delayMs,
+                    });
+                    await this.sleep(delayMs);
+                    attempt++;
+                    continue;
+                }
+                throw error;
+            }
+        }
+    }
+    /**
+     * Executes a single HTTP request (no retry).
+     */
+    async executeSingleRequest(args) {
+        const { url, method, path, headers, body } = args;
+        const response = await errors_1.RequestTimeoutError.rejectAfterTimeout(__classPrivateFieldGet(this, _Client_fetch, "f").call(this, url.toString(), {
+            method: method.toUpperCase(),
+            headers,
+            body,
+            agent: __classPrivateFieldGet(this, _Client_agent, "f"),
+        }), __classPrivateFieldGet(this, _Client_timeoutMs, "f"));
+        const responseText = await response.text();
+        if (!response.ok) {
+            throw (0, errors_1.buildRequestError)(response, responseText);
+        }
+        const responseJson = JSON.parse(responseText);
+        this.log(logging_1.LogLevel.INFO, "request success", {
+            method,
+            path,
+            ...this.extractRequestId(responseJson),
+        });
+        return responseJson;
+    }
+    /**
+     * Logs a request error with appropriate detail level.
+     */
+    logRequestError(error, attempt) {
+        this.log(logging_1.LogLevel.WARN, "request fail", {
+            code: error.code,
+            message: error.message,
+            attempt,
+            ...this.extractRequestId(error),
+        });
+        if ((0, errors_1.isHTTPResponseError)(error)) {
+            this.log(logging_1.LogLevel.DEBUG, "failed response body", {
+                body: error.body,
+            });
+        }
+    }
+    /**
+     * Extracts request_id from an object if present.
+     */
+    extractRequestId(obj) {
+        if (obj &&
+            typeof obj === "object" &&
+            "request_id" in obj &&
+            typeof obj.request_id === "string") {
+            return { requestId: obj.request_id };
+        }
+        return {};
+    }
+    /**
+     * Determines if an error can be retried based on its error code and method.
+     * Rate limits (429) are always retryable since the server explicitly asks us
+     * to retry. Server errors (500, 503) are only retried for idempotent methods
+     * (GET, DELETE) to avoid duplicate side effects.
+     */
+    canRetry(error, method) {
+        if (!errors_1.APIResponseError.isAPIResponseError(error)) {
+            return false;
+        }
+        // Rate limits are always retryable - server says "try again later"
+        if (error.code === errors_1.APIErrorCode.RateLimited) {
+            return true;
+        }
+        // Server errors only retry for idempotent methods
+        const isIdempotent = method === "get" || method === "delete";
+        if (isIdempotent) {
+            return (error.code === errors_1.APIErrorCode.InternalServerError ||
+                error.code === errors_1.APIErrorCode.ServiceUnavailable);
+        }
+        return false;
+    }
+    /**
+     * Calculates the delay before the next retry attempt.
+     * Uses retry-after header if present, otherwise exponential back-off with
+     * jitter.
+     */
+    calculateRetryDelay(error, attempt) {
+        // Try to get retry-after from the error headers
+        if (errors_1.APIResponseError.isAPIResponseError(error)) {
+            const retryAfterMs = this.parseRetryAfterHeader(error.headers);
+            if (retryAfterMs !== undefined) {
+                return Math.min(retryAfterMs, __classPrivateFieldGet(this, _Client_maxRetryDelayMs, "f"));
+            }
+        }
+        // Exponential back-off with full jitter
+        const baseDelay = __classPrivateFieldGet(this, _Client_initialRetryDelayMs, "f") * Math.pow(2, attempt);
+        const jitter = Math.random();
+        return Math.min(baseDelay * jitter + baseDelay / 2, __classPrivateFieldGet(this, _Client_maxRetryDelayMs, "f"));
+    }
+    /**
+     * Parses the retry-after header value.
+     * Supports both delta-seconds (e.g., "120") and HTTP-date formats.
+     * Returns the delay in milliseconds, or undefined if not present or invalid.
+     */
+    parseRetryAfterHeader(headers) {
+        var _a, _b;
+        if (!headers) {
+            return undefined;
+        }
+        let retryAfterValue = null;
+        // Handle Headers object (standard fetch API)
+        if (typeof headers === "object" && "get" in headers) {
+            const headersObj = headers;
+            retryAfterValue = headersObj.get("retry-after");
+        }
+        // Handle plain object
+        else if (typeof headers === "object") {
+            const headersRecord = headers;
+            retryAfterValue =
+                (_b = (_a = headersRecord["retry-after"]) !== null && _a !== void 0 ? _a : headersRecord["Retry-After"]) !== null && _b !== void 0 ? _b : null;
+        }
+        if (!retryAfterValue) {
+            return undefined;
+        }
+        // Try parsing as delta-seconds (integer)
+        const seconds = parseInt(retryAfterValue, 10);
+        if (!isNaN(seconds) && seconds >= 0) {
+            return seconds * 1000;
+        }
+        // Try parsing as HTTP-date
+        const date = Date.parse(retryAfterValue);
+        if (!isNaN(date)) {
+            const delayMs = date - Date.now();
+            return delayMs > 0 ? delayMs : 0;
+        }
+        return undefined;
+    }
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    /**
+     * Logs a warning when the caller passes parameters that are not recognized
+     * by the endpoint definition. This helps catch typos and renamed parameters
+     * (e.g. `archived` vs `in_trash` for `databases.update`) that would
+     * otherwise be silently dropped by `pick()`.
+     */
+    warnUnknownParams(args, endpoint) {
+        var _a;
+        if (!args || typeof args !== "object")
+            return;
+        const unknownKeys = (0, utils_1.getUnknownParams)(args, endpoint);
+        if (unknownKeys.length > 0) {
+            this.log(logging_1.LogLevel.WARN, "unknown parameters were ignored", {
+                unknownParams: unknownKeys,
+                knownParams: [
+                    ...endpoint.pathParams,
+                    ...endpoint.queryParams,
+                    ...endpoint.bodyParams,
+                    ...((_a = endpoint.formDataParams) !== null && _a !== void 0 ? _a : []),
+                ],
+            });
         }
     }
     /**
@@ -2384,8 +2689,8 @@ class Client {
         return headers;
     }
 }
-_Client_auth = new WeakMap(), _Client_logLevel = new WeakMap(), _Client_logger = new WeakMap(), _Client_prefixUrl = new WeakMap(), _Client_timeoutMs = new WeakMap(), _Client_notionVersion = new WeakMap(), _Client_fetch = new WeakMap(), _Client_agent = new WeakMap(), _Client_userAgent = new WeakMap();
-Client.defaultNotionVersion = "2022-06-28";
+_Client_auth = new WeakMap(), _Client_logLevel = new WeakMap(), _Client_logger = new WeakMap(), _Client_prefixUrl = new WeakMap(), _Client_timeoutMs = new WeakMap(), _Client_notionVersion = new WeakMap(), _Client_fetch = new WeakMap(), _Client_agent = new WeakMap(), _Client_userAgent = new WeakMap(), _Client_maxRetries = new WeakMap(), _Client_initialRetryDelayMs = new WeakMap(), _Client_maxRetryDelayMs = new WeakMap();
+Client.defaultNotionVersion = "2025-09-03";
 exports["default"] = Client;
 //# sourceMappingURL=Client.js.map
 
@@ -2398,7 +2703,7 @@ exports["default"] = Client;
 // cspell:disable-file
 // Note: This is a generated file. DO NOT EDIT!
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.oauthIntrospect = exports.oauthRevoke = exports.oauthToken = exports.getFileUpload = exports.completeFileUpload = exports.sendFileUpload = exports.listFileUploads = exports.createFileUpload = exports.getComment = exports.listComments = exports.createComment = exports.search = exports.createDatabase = exports.listDatabases = exports.queryDatabase = exports.updateDatabase = exports.getDatabase = exports.appendBlockChildren = exports.listBlockChildren = exports.deleteBlock = exports.updateBlock = exports.getBlock = exports.getPageProperty = exports.updatePage = exports.getPage = exports.createPage = exports.listUsers = exports.getUser = exports.getSelf = void 0;
+exports.oauthIntrospect = exports.oauthRevoke = exports.oauthToken = exports.getFileUpload = exports.completeFileUpload = exports.sendFileUpload = exports.listFileUploads = exports.createFileUpload = exports.getComment = exports.listComments = exports.createComment = exports.search = exports.createDatabase = exports.updateDatabase = exports.getDatabase = exports.listDataSourceTemplates = exports.createDataSource = exports.queryDataSource = exports.updateDataSource = exports.getDataSource = exports.appendBlockChildren = exports.listBlockChildren = exports.deleteBlock = exports.updateBlock = exports.getBlock = exports.updatePageMarkdown = exports.getPageMarkdown = exports.getPageProperty = exports.movePage = exports.updatePage = exports.getPage = exports.createPage = exports.listUsers = exports.getUser = exports.getSelf = void 0;
 /**
  * Retrieve your token's bot user
  */
@@ -2436,7 +2741,17 @@ exports.createPage = {
     method: "post",
     pathParams: [],
     queryParams: [],
-    bodyParams: ["parent", "properties", "icon", "cover", "content", "children"],
+    bodyParams: [
+        "parent",
+        "properties",
+        "icon",
+        "cover",
+        "content",
+        "children",
+        "markdown",
+        "template",
+        "position",
+    ],
     path: () => `pages`,
 };
 /**
@@ -2450,14 +2765,33 @@ exports.getPage = {
     path: (p) => `pages/${p.page_id}`,
 };
 /**
- * Update page properties
+ * Update page
  */
 exports.updatePage = {
     method: "patch",
     pathParams: ["page_id"],
     queryParams: [],
-    bodyParams: ["properties", "icon", "cover", "archived", "in_trash"],
+    bodyParams: [
+        "archived",
+        "properties",
+        "icon",
+        "cover",
+        "is_locked",
+        "template",
+        "erase_content",
+        "in_trash",
+    ],
     path: (p) => `pages/${p.page_id}`,
+};
+/**
+ * Move a page
+ */
+exports.movePage = {
+    method: "post",
+    pathParams: ["page_id"],
+    queryParams: [],
+    bodyParams: ["parent"],
+    path: (p) => `pages/${p.page_id}/move`,
 };
 /**
  * Retrieve a page property item
@@ -2468,6 +2802,26 @@ exports.getPageProperty = {
     queryParams: ["start_cursor", "page_size"],
     bodyParams: [],
     path: (p) => `pages/${p.page_id}/properties/${p.property_id}`,
+};
+/**
+ * Retrieve a page as markdown
+ */
+exports.getPageMarkdown = {
+    method: "get",
+    pathParams: ["page_id"],
+    queryParams: ["include_transcript"],
+    bodyParams: [],
+    path: (p) => `pages/${p.page_id}/markdown`,
+};
+/**
+ * Update a page's content as markdown
+ */
+exports.updatePageMarkdown = {
+    method: "patch",
+    pathParams: ["page_id"],
+    queryParams: [],
+    bodyParams: ["type", "insert_content", "replace_content_range"],
+    path: (p) => `pages/${p.page_id}/markdown`,
 };
 /**
  * Retrieve a block
@@ -2487,9 +2841,9 @@ exports.updateBlock = {
     pathParams: ["block_id"],
     queryParams: [],
     bodyParams: [
+        "archived",
         "embed",
         "type",
-        "archived",
         "in_trash",
         "bookmark",
         "image",
@@ -2548,8 +2902,66 @@ exports.appendBlockChildren = {
     method: "patch",
     pathParams: ["block_id"],
     queryParams: [],
-    bodyParams: ["children", "after"],
+    bodyParams: ["after", "children", "position"],
     path: (p) => `blocks/${p.block_id}/children`,
+};
+/**
+ * Retrieve a data source
+ */
+exports.getDataSource = {
+    method: "get",
+    pathParams: ["data_source_id"],
+    queryParams: [],
+    bodyParams: [],
+    path: (p) => `data_sources/${p.data_source_id}`,
+};
+/**
+ * Update a data source
+ */
+exports.updateDataSource = {
+    method: "patch",
+    pathParams: ["data_source_id"],
+    queryParams: [],
+    bodyParams: ["archived", "title", "icon", "properties", "in_trash", "parent"],
+    path: (p) => `data_sources/${p.data_source_id}`,
+};
+/**
+ * Query a data source
+ */
+exports.queryDataSource = {
+    method: "post",
+    pathParams: ["data_source_id"],
+    queryParams: ["filter_properties"],
+    bodyParams: [
+        "archived",
+        "sorts",
+        "filter",
+        "start_cursor",
+        "page_size",
+        "in_trash",
+        "result_type",
+    ],
+    path: (p) => `data_sources/${p.data_source_id}/query`,
+};
+/**
+ * Create a data source
+ */
+exports.createDataSource = {
+    method: "post",
+    pathParams: [],
+    queryParams: [],
+    bodyParams: ["parent", "properties", "title", "icon"],
+    path: () => `data_sources`,
+};
+/**
+ * List templates in a data source
+ */
+exports.listDataSourceTemplates = {
+    method: "get",
+    pathParams: ["data_source_id"],
+    queryParams: ["name", "start_cursor", "page_size"],
+    bodyParams: [],
+    path: (p) => `data_sources/${p.data_source_id}/templates`,
 };
 /**
  * Retrieve a database
@@ -2569,43 +2981,16 @@ exports.updateDatabase = {
     pathParams: ["database_id"],
     queryParams: [],
     bodyParams: [
+        "parent",
         "title",
         "description",
+        "is_inline",
         "icon",
         "cover",
-        "properties",
-        "is_inline",
-        "archived",
         "in_trash",
+        "is_locked",
     ],
     path: (p) => `databases/${p.database_id}`,
-};
-/**
- * Query a database
- */
-exports.queryDatabase = {
-    method: "post",
-    pathParams: ["database_id"],
-    queryParams: ["filter_properties"],
-    bodyParams: [
-        "sorts",
-        "filter",
-        "start_cursor",
-        "page_size",
-        "archived",
-        "in_trash",
-    ],
-    path: (p) => `databases/${p.database_id}/query`,
-};
-/**
- * List databases
- */
-exports.listDatabases = {
-    method: "get",
-    pathParams: [],
-    queryParams: ["start_cursor", "page_size"],
-    bodyParams: [],
-    path: () => `databases`,
 };
 /**
  * Create a database
@@ -2616,12 +3001,12 @@ exports.createDatabase = {
     queryParams: [],
     bodyParams: [
         "parent",
-        "properties",
-        "icon",
-        "cover",
         "title",
         "description",
         "is_inline",
+        "initial_data_source",
+        "icon",
+        "cover",
     ],
     path: () => `databases`,
 };
@@ -2773,8 +3158,9 @@ exports.oauthIntrospect = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.APIResponseError = exports.UnknownHTTPResponseError = exports.RequestTimeoutError = exports.ClientErrorCode = exports.APIErrorCode = void 0;
+exports.APIResponseError = exports.UnknownHTTPResponseError = exports.InvalidPathParameterError = exports.RequestTimeoutError = exports.ClientErrorCode = exports.APIErrorCode = void 0;
 exports.isNotionClientError = isNotionClientError;
+exports.validateRequestPath = validateRequestPath;
 exports.isHTTPResponseError = isHTTPResponseError;
 exports.buildRequestError = buildRequestError;
 const utils_1 = __nccwpck_require__(1655);
@@ -2802,6 +3188,7 @@ var ClientErrorCode;
 (function (ClientErrorCode) {
     ClientErrorCode["RequestTimeout"] = "notionhq_client_request_timeout";
     ClientErrorCode["ResponseError"] = "notionhq_client_response_error";
+    ClientErrorCode["InvalidPathParameter"] = "notionhq_client_invalid_path_parameter";
 })(ClientErrorCode || (exports.ClientErrorCode = ClientErrorCode = {}));
 /**
  * Base error type.
@@ -2851,15 +3238,60 @@ class RequestTimeoutError extends NotionClientErrorBase {
     }
 }
 exports.RequestTimeoutError = RequestTimeoutError;
+/**
+ * Error thrown when a path parameter contains invalid characters such as
+ * path traversal sequences (..) that could alter the intended API endpoint.
+ */
+class InvalidPathParameterError extends NotionClientErrorBase {
+    constructor(message = "Path parameter contains invalid characters that could alter the request path") {
+        super(message);
+        this.code = ClientErrorCode.InvalidPathParameter;
+        this.name = "InvalidPathParameterError";
+    }
+    static isInvalidPathParameterError(error) {
+        return isNotionClientErrorWithCode(error, {
+            [ClientErrorCode.InvalidPathParameter]: true,
+        });
+    }
+}
+exports.InvalidPathParameterError = InvalidPathParameterError;
+/**
+ * Validates that a request path does not contain path traversal sequences.
+ * Throws InvalidPathParameterError if the path contains ".." segments,
+ * including URL-encoded variants like %2e%2e.
+ */
+function validateRequestPath(path) {
+    // Check for literal path traversal
+    if (path.includes("..")) {
+        throw new InvalidPathParameterError(`Request path "${path}" contains path traversal sequence ".."`);
+    }
+    // Check for URL-encoded path traversal (%2e = '.')
+    // Only decode if path contains potential encoded dots
+    if (/%2e/i.test(path)) {
+        let decoded;
+        try {
+            decoded = decodeURIComponent(path);
+        }
+        catch {
+            // Invalid percent encoding - not a traversal concern
+            return;
+        }
+        if (decoded.includes("..")) {
+            throw new InvalidPathParameterError(`Request path "${path}" contains encoded path traversal sequence`);
+        }
+    }
+}
 class HTTPResponseError extends NotionClientErrorBase {
     constructor(args) {
         super(args.message);
         this.name = "HTTPResponseError";
-        const { code, status, headers, rawBodyText } = args;
+        const { code, status, headers, rawBodyText, additional_data, request_id } = args;
         this.code = code;
         this.status = status;
         this.headers = headers;
         this.body = rawBodyText;
+        this.additional_data = additional_data;
+        this.request_id = request_id;
     }
 }
 const httpResponseErrorCodes = {
@@ -2893,6 +3325,8 @@ class UnknownHTTPResponseError extends HTTPResponseError {
             ...args,
             code: ClientErrorCode.ResponseError,
             message: (_a = args.message) !== null && _a !== void 0 ? _a : `Request to Notion API failed with status: ${args.status}`,
+            additional_data: undefined,
+            request_id: undefined,
         });
         this.name = "UnknownHTTPResponseError";
     }
@@ -2939,6 +3373,8 @@ function buildRequestError(response, bodyText) {
             headers: response.headers,
             status: response.status,
             rawBodyText: bodyText,
+            additional_data: apiErrorResponseBody.additional_data,
+            request_id: apiErrorResponseBody.request_id,
         });
     }
     return new UnknownHTTPResponseError({
@@ -2964,10 +3400,14 @@ function parseAPIErrorResponseBody(body) {
         !isAPIErrorCode(parsed["code"])) {
         return;
     }
+    const additional_data = parsed["additional_data"];
+    const request_id = parsed["request_id"];
     return {
         ...parsed,
         code: parsed["code"],
         message: parsed["message"],
+        additional_data,
+        request_id,
     };
 }
 function isAPIErrorCode(code) {
@@ -2984,15 +3424,22 @@ function isAPIErrorCode(code) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.iteratePaginatedAPI = iteratePaginatedAPI;
 exports.collectPaginatedAPI = collectPaginatedAPI;
+exports.iterateDataSourceTemplates = iterateDataSourceTemplates;
+exports.collectDataSourceTemplates = collectDataSourceTemplates;
 exports.isFullBlock = isFullBlock;
 exports.isFullPage = isFullPage;
+exports.isFullDataSource = isFullDataSource;
 exports.isFullDatabase = isFullDatabase;
-exports.isFullPageOrDatabase = isFullPageOrDatabase;
+exports.isFullPageOrDataSource = isFullPageOrDataSource;
 exports.isFullUser = isFullUser;
 exports.isFullComment = isFullComment;
 exports.isTextRichTextItemResponse = isTextRichTextItemResponse;
 exports.isEquationRichTextItemResponse = isEquationRichTextItemResponse;
 exports.isMentionRichTextItemResponse = isMentionRichTextItemResponse;
+exports.extractNotionId = extractNotionId;
+exports.extractDatabaseId = extractDatabaseId;
+exports.extractPageId = extractPageId;
+exports.extractBlockId = extractBlockId;
 /**
  * Returns an async iterator over the results of any paginated Notion API.
  *
@@ -3049,6 +3496,55 @@ async function collectPaginatedAPI(listFn, firstPageArgs) {
     return results;
 }
 /**
+ * Returns an async iterator over data source templates.
+ *
+ * Example (given a notion Client called `notion`):
+ *
+ * ```
+ * for await (const template of iterateDataSourceTemplates(notion, {
+ *   data_source_id: dataSourceId,
+ * })) {
+ *   console.log(template.name, template.is_default)
+ * }
+ * ```
+ *
+ * @param client A Notion client instance.
+ * @param args Arguments including the data_source_id and optional start_cursor.
+ */
+async function* iterateDataSourceTemplates(client, args) {
+    let nextCursor = args.start_cursor;
+    do {
+        const response = await client.dataSources.listTemplates({
+            ...args,
+            start_cursor: nextCursor,
+        });
+        yield* response.templates;
+        nextCursor = response.next_cursor;
+    } while (nextCursor);
+}
+/**
+ * Collect all data source templates into an in-memory array.
+ *
+ * Example (given a notion Client called `notion`):
+ *
+ * ```
+ * const templates = await collectDataSourceTemplates(notion, {
+ *   data_source_id: dataSourceId,
+ * })
+ * // Do something with templates.
+ * ```
+ *
+ * @param client A Notion client instance.
+ * @param args Arguments including the data_source_id and optional start_cursor.
+ */
+async function collectDataSourceTemplates(client, args) {
+    const results = [];
+    for await (const template of iterateDataSourceTemplates(client, args)) {
+        results.push(template);
+    }
+    return results;
+}
+/**
  * @returns `true` if `response` is a full `BlockObjectResponse`.
  */
 function isFullBlock(response) {
@@ -3061,18 +3557,27 @@ function isFullPage(response) {
     return response.object === "page" && "url" in response;
 }
 /**
+ * @returns `true` if `response` is a full `DataSourceObjectResponse`.
+ */
+function isFullDataSource(response) {
+    return response.object === "data_source";
+}
+/**
  * @returns `true` if `response` is a full `DatabaseObjectResponse`.
  */
 function isFullDatabase(response) {
-    return response.object === "database" && "title" in response;
+    return response.object === "database";
 }
 /**
- * @returns `true` if `response` is a full `DatabaseObjectResponse` or a full
+ * @returns `true` if `response` is a full `DataSourceObjectResponse` or a full
  * `PageObjectResponse`.
+ *
+ * Can be used on the results of the list response from `queryDataSource` or
+ * `search` APIs.
  */
-function isFullPageOrDatabase(response) {
-    if (response.object === "database") {
-        return isFullDatabase(response);
+function isFullPageOrDataSource(response) {
+    if (response.object === "data_source") {
+        return isFullDataSource(response);
     }
     else {
         return isFullPage(response);
@@ -3108,6 +3613,96 @@ function isEquationRichTextItemResponse(richText) {
 function isMentionRichTextItemResponse(richText) {
     return richText.type === "mention";
 }
+/**
+ * Extracts a Notion ID from a Notion URL or returns the input if it's already a valid ID.
+ *
+ * Prioritizes path IDs over query parameters to avoid extracting view IDs instead of database IDs.
+ *
+ * @param urlOrId A Notion URL or ID string
+ * @returns The extracted UUID in standard format (with hyphens) or null if invalid
+ *
+ * @example
+ * ```typescript
+ * // Database URL with view ID - extracts database ID, not view ID
+ * extractNotionId('https://notion.so/workspace/DB-abc123def456789012345678901234ab?v=viewid123')
+ * // Returns: 'abc123de-f456-7890-1234-5678901234ab' (database ID)
+ *
+ * // Already formatted UUID
+ * extractNotionId('12345678-1234-1234-1234-123456789abc')
+ * // Returns: '12345678-1234-1234-1234-123456789abc'
+ * ```
+ */
+function extractNotionId(urlOrId) {
+    if (!urlOrId || typeof urlOrId !== "string") {
+        return null;
+    }
+    const trimmed = urlOrId.trim();
+    // Check if it's already a properly formatted UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(trimmed)) {
+        return trimmed.toLowerCase();
+    }
+    // Check if it's a compact UUID (32 chars, no hyphens)
+    const compactUuidRegex = /^[0-9a-f]{32}$/i;
+    if (compactUuidRegex.test(trimmed)) {
+        return formatUuid(trimmed);
+    }
+    // Extract from URL - prioritize path over query parameters
+    // This prevents extracting view IDs when database IDs are in the path
+    const pathMatch = trimmed.match(/\/[^/?#]*-([0-9a-f]{32})(?:[/?#]|$)/i);
+    if (pathMatch && pathMatch[1]) {
+        return formatUuid(pathMatch[1]);
+    }
+    // Fallback to query parameters if no path ID found
+    const queryMatch = trimmed.match(/[?&](?:p|page_id|database_id)=([0-9a-f]{32})/i);
+    if (queryMatch && queryMatch[1]) {
+        return formatUuid(queryMatch[1]);
+    }
+    // Last resort: any 32-char hex string in the URL
+    const anyMatch = trimmed.match(/([0-9a-f]{32})/i);
+    if (anyMatch && anyMatch[1]) {
+        return formatUuid(anyMatch[1]);
+    }
+    return null;
+}
+/**
+ * Formats a 32-character hex string into a standard UUID format.
+ * @param compactId 32-character hex string without hyphens
+ * @returns UUID with hyphens in standard format
+ */
+function formatUuid(compactId) {
+    const clean = compactId.toLowerCase();
+    return `${clean.slice(0, 8)}-${clean.slice(8, 12)}-${clean.slice(12, 16)}-${clean.slice(16, 20)}-${clean.slice(20, 32)}`;
+}
+/**
+ * Extracts a database ID from a Notion database URL.
+ * Convenience wrapper around `extractNotionId`.
+ */
+function extractDatabaseId(databaseUrl) {
+    return extractNotionId(databaseUrl);
+}
+/**
+ * Extracts a page ID from a Notion page URL.
+ * Convenience wrapper around `extractNotionId`.
+ */
+function extractPageId(pageUrl) {
+    return extractNotionId(pageUrl);
+}
+/**
+ * Extracts a block ID from a Notion URL with a block fragment.
+ * Looks for #block-<id> or #<id> patterns.
+ */
+function extractBlockId(urlWithBlock) {
+    if (!urlWithBlock || typeof urlWithBlock !== "string") {
+        return null;
+    }
+    // Look for block fragment in URL (#block-32chars or just #32chars)
+    const blockMatch = urlWithBlock.match(/#(?:block-)?([0-9a-f]{32})/i);
+    if (blockMatch && blockMatch[1]) {
+        return formatUuid(blockMatch[1]);
+    }
+    return null;
+}
 //# sourceMappingURL=helpers.js.map
 
 /***/ }),
@@ -3126,7 +3721,7 @@ var __webpack_unused_export__;
  * @packageDocumentation
  */
 __webpack_unused_export__ = ({ value: true });
-__webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = exports.dl = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = exports.Kj = void 0;
+__webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = exports.dl = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = __webpack_unused_export__ = exports.Kj = void 0;
 var Client_1 = __nccwpck_require__(9711);
 Object.defineProperty(exports, "Kj", ({ enumerable: true, get: function () { return Client_1.default; } }));
 var logging_1 = __nccwpck_require__(2743);
@@ -3137,17 +3732,26 @@ __webpack_unused_export__ = ({ enumerable: true, get: function () { return error
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return errors_1.APIResponseError; } });
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return errors_1.UnknownHTTPResponseError; } });
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return errors_1.RequestTimeoutError; } });
+__webpack_unused_export__ = ({ enumerable: true, get: function () { return errors_1.InvalidPathParameterError; } });
 // Error helpers
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return errors_1.isNotionClientError; } });
+__webpack_unused_export__ = ({ enumerable: true, get: function () { return errors_1.isHTTPResponseError; } });
 var helpers_1 = __nccwpck_require__(5847);
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.collectPaginatedAPI; } });
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.iteratePaginatedAPI; } });
+__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.collectDataSourceTemplates; } });
+__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.iterateDataSourceTemplates; } });
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullBlock; } });
+__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullDataSource; } });
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullDatabase; } });
 Object.defineProperty(exports, "dl", ({ enumerable: true, get: function () { return helpers_1.isFullPage; } }));
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullUser; } });
 __webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullComment; } });
-__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullPageOrDatabase; } });
+__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.isFullPageOrDataSource; } });
+__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.extractNotionId; } });
+__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.extractDatabaseId; } });
+__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.extractPageId; } });
+__webpack_unused_export__ = ({ enumerable: true, get: function () { return helpers_1.extractBlockId; } });
 //# sourceMappingURL=index.js.map
 
 /***/ }),
@@ -3202,6 +3806,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.assertNever = assertNever;
 exports.pick = pick;
 exports.isObject = isObject;
+exports.getUnknownParams = getUnknownParams;
 /**
  * Utility for enforcing exhaustiveness checks in the type system.
  *
@@ -3218,6 +3823,22 @@ function pick(base, keys) {
 }
 function isObject(o) {
     return typeof o === "object" && o !== null;
+}
+/**
+ * Returns parameter names present in `args` that are not recognized by the
+ * endpoint definition. Useful for warning users about typos or parameters
+ * that have been renamed across API versions.
+ */
+function getUnknownParams(args, endpoint) {
+    var _a;
+    const knownKeys = new Set([
+        ...endpoint.pathParams,
+        ...endpoint.queryParams,
+        ...endpoint.bodyParams,
+        ...((_a = endpoint.formDataParams) !== null && _a !== void 0 ? _a : []),
+        "auth",
+    ]);
+    return Object.keys(args).filter(k => !knownKeys.has(k));
 }
 //# sourceMappingURL=utils.js.map
 
@@ -28471,7 +29092,7 @@ module.exports = parseParams
 /***/ 4585:
 /***/ ((module) => {
 
-module.exports = /*#__PURE__*/JSON.parse('{"name":"@notionhq/client","version":"4.0.2","description":"A simple and easy to use client for the Notion API","engines":{"node":">=18"},"homepage":"https://developers.notion.com/docs/getting-started","bugs":{"url":"https://github.com/makenotion/notion-sdk-js/issues"},"repository":{"type":"git","url":"https://github.com/makenotion/notion-sdk-js/"},"keywords":["notion","notionapi","rest","notion-api"],"main":"./build/src","types":"./build/src/index.d.ts","scripts":{"prepare":"npm run build","prepublishOnly":"npm run checkLoggedIn && npm run lint && npm run test","build":"tsc","prettier":"prettier --write .","lint":"prettier --check . && eslint . --ext .ts && cspell \'**/*\' ","test":"jest ./test","check-links":"git ls-files | grep md$ | xargs -n 1 markdown-link-check","prebuild":"npm run clean","clean":"rm -rf ./build","checkLoggedIn":"./scripts/verifyLoggedIn.sh"},"author":"","license":"MIT","files":["build/package.json","build/src/**"],"devDependencies":{"@types/jest":"28.1.4","@typescript-eslint/eslint-plugin":"5.39.0","@typescript-eslint/parser":"5.39.0","cspell":"5.4.1","eslint":"7.24.0","jest":"28.1.2","markdown-link-check":"3.13.7","prettier":"2.8.8","ts-jest":"28.0.5","typescript":"5.9.2"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"@notionhq/client","version":"5.12.0","description":"A simple and easy to use client for the Notion API","engines":{"node":">=18"},"homepage":"https://developers.notion.com/docs/getting-started","bugs":{"url":"https://github.com/makenotion/notion-sdk-js/issues"},"repository":{"type":"git","url":"https://github.com/makenotion/notion-sdk-js/"},"keywords":["notion","notionapi","rest","notion-api"],"main":"./build/src","types":"./build/src/index.d.ts","scripts":{"prepare":"husky && npm run build","prepublishOnly":"npm run checkLoggedIn && npm run lint && npm run test","build":"tsc","prettier":"prettier --write .","lint":"prettier --check . && eslint . --ext .ts && cspell \'**/*\' ","test":"jest ./test","check-links":"git ls-files | grep md$ | xargs -n 1 markdown-link-check","prebuild":"npm run clean","clean":"rm -rf ./build","checkLoggedIn":"./scripts/verifyLoggedIn.sh"},"lint-staged":{"*.{ts,js,json,md}":"prettier --write","*.ts":"eslint --fix"},"author":"","license":"MIT","files":["build/package.json","build/src/**"],"devDependencies":{"@types/jest":"29.5.14","@typescript-eslint/eslint-plugin":"7.18.0","@typescript-eslint/parser":"7.18.0","cspell":"8.17.1","eslint":"8.57.1","husky":"^9.1.7","jest":"29.7.0","lint-staged":"^16.2.6","markdown-link-check":"3.13.7","prettier":"3.3.3","ts-jest":"29.2.5","typescript":"5.9.2"}}');
 
 /***/ }),
 
@@ -31639,8 +32260,8 @@ async function fetchTweetOnSpecificDate(date) {
     const notion = new src/* Client */.Kj({
         auth: NOTION_TOKEN
     });
-    const pages = await notion.databases.query({
-        database_id: NOTION_DB_ID,
+    const pages = await notion.dataSources.query({
+        data_source_id: NOTION_DB_ID,
         filter: {
             property: '日付',
             date: {

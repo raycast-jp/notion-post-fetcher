@@ -21,8 +21,8 @@ export async function fetchTweetOnSpecificDate(date: Date): Promise<TweetData> {
   const notion = new Client({
     auth: NOTION_TOKEN
   })
-  const pages = await notion.databases.query({
-    database_id: NOTION_DB_ID,
+  const pages = await notion.dataSources.query({
+    data_source_id: NOTION_DB_ID,
     filter: {
       property: '日付',
       date: {
