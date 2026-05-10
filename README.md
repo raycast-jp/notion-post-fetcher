@@ -22,6 +22,22 @@ Notion データベースから指定日付の投稿内容を取得する GitHub
 | ------- | ---------------- |
 | `tweet` | 取得した投稿内容 |
 
+`tweet` は以下の形状の JSON オブジェクトです:
+
+```ts
+{
+  content: string
+  media?: string
+  thread?: {
+    content: string
+    media?: string
+  }
+}
+```
+
+`thread` は Notion DB の `スレッド投稿内容`
+が空または列が存在しない場合は省略されます。
+
 ## Usage
 
 ```yaml
@@ -36,17 +52,27 @@ steps:
       targetDate: '2024-09-03'
 
   - run: echo "${{ steps.fetch.outputs.tweet }}"
+
+  # post-tweet-v2-action にスレッド付きで投稿する例
+  - uses: raycast-jp/post-tweet-v2-action@main
+    with:
+      message: ${{ fromJSON(steps.fetch.outputs.tweet).content }}
+      media: ${{ fromJSON(steps.fetch.outputs.tweet).media }}
+      thread-message: ${{ fromJSON(steps.fetch.outputs.tweet).thread.content }}
+      thread-media: ${{ fromJSON(steps.fetch.outputs.tweet).thread.media }}
 ```
 
 ## Notion データベースの要件
 
 対象の Notion データベースには以下のプロパティが必要です:
 
-| プロパティ名 | 型        | 説明            |
-| ------------ | --------- | --------------- |
-| `日付`       | Date      | 投稿の日付      |
-| `投稿内容`   | Rich Text | 投稿テキスト    |
-| `画像`       | Files     | 添付画像 (任意) |
+| プロパティ名       | 型        | 説明                    |
+| ------------------ | --------- | ----------------------- |
+| `日付`             | Date      | 投稿の日付              |
+| `投稿内容`         | Rich Text | 投稿テキスト            |
+| `画像`             | Files     | 添付画像 (任意)         |
+| `スレッド投稿内容` | Rich Text | 返信ツイート本文 (任意) |
+| `スレッド画像`     | Files     | 返信ツイート画像 (任意) |
 
 ## Development
 

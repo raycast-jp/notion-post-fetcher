@@ -100,6 +100,77 @@ describe('action', () => {
     expect(errorMock).not.toHaveBeenCalled()
   })
 
+  it('get a tweet with thread', async () => {
+    // Set the action's inputs as return values from core.getInput()
+    getInputMock.mockImplementation(name => {
+      switch (name) {
+        case 'targetDate':
+          return '2024-09-03'
+        default:
+          return ''
+      }
+    })
+
+    jest
+      .spyOn(notion, 'fetchTweetOnSpecificDate')
+      .mockImplementation(async (date: Date) =>
+        Promise.resolve({
+          content: `tweet on ${format(date, 'yyyy-MM-dd')}`,
+          media: 'https://example.com/image1.jpg',
+          thread: {
+            content: 'reply tweet',
+            media: 'https://example.com/image2.jpg'
+          }
+        })
+      )
+
+    await main.run()
+    expect(runMock).toHaveReturned()
+
+    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'tweet', {
+      content: `tweet on 2024-09-03`,
+      media: 'https://example.com/image1.jpg',
+      thread: {
+        content: 'reply tweet',
+        media: 'https://example.com/image2.jpg'
+      }
+    })
+    expect(errorMock).not.toHaveBeenCalled()
+  })
+
+  it('get a tweet with thread without media', async () => {
+    getInputMock.mockImplementation(name => {
+      switch (name) {
+        case 'targetDate':
+          return '2024-09-03'
+        default:
+          return ''
+      }
+    })
+
+    jest
+      .spyOn(notion, 'fetchTweetOnSpecificDate')
+      .mockImplementation(async (date: Date) =>
+        Promise.resolve({
+          content: `tweet on ${format(date, 'yyyy-MM-dd')}`,
+          thread: {
+            content: 'reply tweet'
+          }
+        })
+      )
+
+    await main.run()
+    expect(runMock).toHaveReturned()
+
+    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'tweet', {
+      content: `tweet on 2024-09-03`,
+      thread: {
+        content: 'reply tweet'
+      }
+    })
+    expect(errorMock).not.toHaveBeenCalled()
+  })
+
   it('sets a failed status', async () => {
     // Set the action's inputs as return values from core.getInput()
     getInputMock.mockImplementation(name => {

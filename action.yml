@@ -23,7 +23,10 @@ inputs:
 # Define your outputs here.
 outputs:
   tweet:
-    description: 'tweet you should post'
+    description: |
+      tweet you should post.
+      Shape: { content: string, media?: string, thread?: { content: string, media?: string } }
+      `thread` is omitted when the row has no スレッド投稿内容.
 
 runs:
   using: node20

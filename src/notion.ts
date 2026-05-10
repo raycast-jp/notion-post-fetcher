@@ -4,9 +4,15 @@ import { Client, isFullPage } from '@notionhq/client'
 import { config } from 'dotenv'
 config()
 
+interface ThreadData {
+  content: string
+  media?: string
+}
+
 interface TweetData {
   content: string
   media?: string
+  thread?: ThreadData
 }
 
 /**
@@ -58,8 +64,29 @@ export async function fetchTweetOnSpecificDate(date: Date): Promise<TweetData> {
     })
     .filter(Boolean)
 
+  const threadContent =
+    props['スレッド投稿内容']?.['rich_text']
+      ?.map((x: { text: { content: string } }) => x.text.content)
+      .join('') ?? ''
+
+  const threadMediaFiles = props['スレッド画像']?.files || []
+  const threadMediaUrls = threadMediaFiles
+    .map((file: { file?: { url: string }; external?: { url: string } }) => {
+      return file.file?.url || file.external?.url
+    })
+    .filter(Boolean)
+
+  const thread =
+    threadContent.length > 0
+      ? {
+          content: threadContent,
+          media: threadMediaUrls.length > 0 ? threadMediaUrls[0] : undefined
+        }
+      : undefined
+
   return {
     content: tweetContent,
-    media: mediaUrls.length > 0 ? mediaUrls[0] : undefined
+    media: mediaUrls.length > 0 ? mediaUrls[0] : undefined,
+    thread
   }
 }

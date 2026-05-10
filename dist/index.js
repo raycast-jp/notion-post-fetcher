@@ -32288,9 +32288,25 @@ async function fetchTweetOnSpecificDate(date) {
         return file.file?.url || file.external?.url;
     })
         .filter(Boolean);
+    const threadContent = props['スレッド投稿内容']?.['rich_text']
+        ?.map((x) => x.text.content)
+        .join('') ?? '';
+    const threadMediaFiles = props['スレッド画像']?.files || [];
+    const threadMediaUrls = threadMediaFiles
+        .map((file) => {
+        return file.file?.url || file.external?.url;
+    })
+        .filter(Boolean);
+    const thread = threadContent.length > 0
+        ? {
+            content: threadContent,
+            media: threadMediaUrls.length > 0 ? threadMediaUrls[0] : undefined
+        }
+        : undefined;
     return {
         content: tweetContent,
-        media: mediaUrls.length > 0 ? mediaUrls[0] : undefined
+        media: mediaUrls.length > 0 ? mediaUrls[0] : undefined,
+        thread
     };
 }
 
